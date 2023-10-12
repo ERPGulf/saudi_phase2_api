@@ -1,0 +1,15 @@
+{% if doc.customer_address_data %}
+<cac:PostalAddress>
+<cbc:StreetName>{{ doc.customer_address_data.street }}</cbc:StreetName>
+
+<cbc:BuildingNumber>{{ doc.customer_address_data.building_no }}</cbc:BuildingNumber>
+<cbc:PlotIdentification>{{ doc.customer_address_data.plot_id_no }}</cbc:PlotIdentification>
+<cbc:CitySubdivisionName>{{ doc.customer_address_data.street}}</cbc:CitySubdivisionName>
+<cbc:CityName>{{ doc.customer_address_data.city }}</cbc:CityName>
+<cbc:PostalZone>{{ doc.customer_address_data.pincode }}</cbc:PostalZone>
+<cbc:CountrySubentityCode>{{ doc.customer_address_data.state }}</cbc:CountrySubentityCode>
+<cac:Country>
+<cbc:IdentificationCode listID="ISO3166-1" listAgencyID="6">SA</cbc:IdentificationCode>
+</cac:Country>
+</cac:PostalAddress>
+ {% endif %}
