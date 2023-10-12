@@ -23,7 +23,7 @@
 <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
 <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
 <cbc:ID>TOSL108</cbc:ID>
-<cbc:UUID>{{ 0f133d38-68c4-11ee-96f8-020017019f27}}</cbc:UUID>
+<cbc:UUID>16e78469-64af-406d-9cfd-895e724198f0</cbc:UUID>
 <cbc:IssueDate>{{ doc.posting_date }}</cbc:IssueDate>
 <cbc:InvoiceTypeCode listID="UN/ECE 1001 Subset" listAgencyID="6" name="0100000">388</cbc:InvoiceTypeCode>
 <cbc:Note languageID="en">Ordered in our booth at the convention.</cbc:Note>
@@ -44,7 +44,7 @@
 </cac:ContractDocumentReference>
 <cac:AdditionalDocumentReference>
 <cbc:ID>ICV</cbc:ID>
-<cbc:UUID>{{ 0f133d38-68c4-11ee-96f8-020017019f27}}</cbc:UUID>
+<cbc:UUID>16e78469-64af-406d-9cfd-895e724198f0</cbc:UUID>
 </cac:AdditionalDocumentReference>
 <cac:AdditionalDocumentReference>
 <cbc:ID>PIH</cbc:ID>

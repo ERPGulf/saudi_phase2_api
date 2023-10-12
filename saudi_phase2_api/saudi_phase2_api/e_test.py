@@ -79,7 +79,7 @@ def compliance_API_call(csr):
     url2 = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/production/csids'
     x = requests.post(url2, json = myobj1, headers = headerr1)
     response1= x.json()
-    print(response1)
+    # print(response1)
     # pcsid=(response1['binarySecurityToken'])
     # pcsid_secret =response1['secret']
     # with open("PCSIDresp.txt", "w") as f:
@@ -446,7 +446,7 @@ def compliance_Invoice_API_Call(doc):
         url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices"
         payload = json.dumps({
             "invoiceHash": "",
-            "uuid":"0f133d38-68c4-11ee-96f8-020017019f27",
+            "uuid":"16e78469-64af-406d-9cfd-895e724198f0",
             "invoice": base64_message
         })
         
