@@ -4,6 +4,7 @@ frappe.connect()
 import requests    
 import pyqrcode
 import os
+# from path import Path
 from frappe.utils import cstr, flt
 import uuid
 from pickle import FALSE
@@ -20,6 +21,13 @@ from subprocess import call
 def log_data(data):
     logger = frappe.logger("file-log", allow_site=True, file_count=50)
     logger.info(data)
+def generate_single_invoice(docname):
+    doc = frappe.get_doc("Sales Invoice", docname)
+    frappe.has_permission("Sales Invoice", doc=doc, throw=True)
+
+    e_invoice = prepare_and_attach_invoice(doc, True)
+    return e_invoice.file_url
+
 def create_Csr():
     cmd = "openssl ecparam -name secp256k1 -genkey -noout -out privatekey3.pem"
     decrypted1 = call(cmd, shell=True) 
@@ -34,10 +42,13 @@ def create_Csr():
         data = data.replace("\n","")
         data = data.replace("\r","")
     with open(r'taxpayerCSRbase64Encoded3.txt', 'w') as file:
-        file.write(data)
+        file.write(data) 
         print("done")
     return data
 def compliance_API_call(csr):
+    # new_path = "/opt/bench/frappe-bench/apps/saudi_einvoice/saudi_einvoice"
+    # cwd = os.getcwd()
+    # site=(frappe.local.site)
     # print("inside compliance api call")
     # print(csr)
     # body_string =  "csr:" + csr
@@ -97,6 +108,8 @@ def compliance_API_call(csr):
     #     # Writing the replaced data in our
     #     # text file
     #     file.write(base64_message1)
+    # # print(base64_message1)
+  
     # headerr2={"Accept" :"application/json",
     #        "accept-language": 'en' ,
     #        "Clearance-Status": '0',
@@ -108,6 +121,7 @@ def compliance_API_call(csr):
 	# 	fields=("name", "file_name", "attached_to_name","file_url"),
 	# 	filters={"attached_to_name": ("in", doc.name), "attached_to_doctype": "Sales Invoice"},
 	# )
+    # # print(attachments)
     # for attachment in attachments:
     #     if (
 	# 		attachment.file_name.startswith("Signed")
@@ -115,7 +129,11 @@ def compliance_API_call(csr):
 	# 	):
     #         xml_filename = attachment.file_name
     #         file_url = attachment.file_url
-    # xml_file="saudi_phase2_api/saudi_phase2_api/e_test.xml"
+
+    
+    # xml_file=cwd+'/'+site+'/public'+file_url
+
+    # # print(xml_file)
     # log_data(f'Attchment data : {attachments}')
     # with open(xml_file, 'r') as file:
     #     data1 = file.read()
@@ -139,8 +157,10 @@ def compliance_API_call(csr):
     # x = requests.post(url3, json = body, headers = headerr2)
     # response2= x.text
     # print(response2)
-    # return response
-#creating csr
+    # return response     
+        
+doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00007")
+# #creating csr
 csr = create_Csr()
 # print("before printing csr")
 # print(csr)
@@ -382,7 +402,7 @@ def prepare_invoice(invoice, progressive_number):
     # print(invoice.qr_code)
     invoice.uuid = uuid.uuid1()
     uuid1=invoice.uuid
-    print(uuid1)
+    # print(uuid1)
     # print(invoice.uuid)
     # settings = frappe.get_doc('Hash')
     settings = '12346'
@@ -390,7 +410,6 @@ def prepare_invoice(invoice, progressive_number):
     invoice.pih = '123'
     # print(invoice.pih)
     return invoice ,uuid1
-
 def prepare_and_attach_invoice(doc, replace=False):
     progressive_name ="Pro Name"
     progressive_number ="Pro Number"
@@ -408,6 +427,7 @@ def prepare_and_attach_invoice(doc, replace=False):
     invoice_xml = invoice_xml.replace("&", "&amp;")
     # print(invoice_xml)
     xml_filename = progressive_name + ".xml"
+    # print(xml_filename)
     hash_name = progressive_name + ".txt"
     file = frappe.get_doc(
         {
@@ -430,7 +450,12 @@ def prepare_and_attach_invoice(doc, replace=False):
                  "attached_to_name": doc.name,},
     )
     # print(attachments)
+    # print(file)
     return file
+# def generate_single_invoice(docname):
+#     e_invoice = prepare_and_attach_invoice(doc, True)
+#     # print(e_invoice)
+#     return e_invoice.file_url
 def compliance_Invoice_API_Call(doc):
     
         file_obj = prepare_and_attach_invoice(doc, replace=False)
@@ -443,7 +468,7 @@ def compliance_Invoice_API_Call(doc):
         # print("invoice:" + base64_message)
         # uuid1 = prepare_invoice(doc, "123")
         # print(uuid1)
-        url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices"
+        url4= "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices"
         payload = json.dumps({
             "invoiceHash": "",
             "uuid":"16e78469-64af-406d-9cfd-895e724198f0",
@@ -462,7 +487,7 @@ def compliance_Invoice_API_Call(doc):
             'Content-Type': 'application/json',
             'Cookie': 'TS0106293e=0132a679c00a4c9706d22322b706b9d2da747b4a49d810d09a0ea0d79d180f7faa3fd465c9dc5e963c54f5d98888632e7b9d8eb204'
     }
-        response = requests.request("POST", url, headers=headers, data=payload)
+        response = requests.request("POST", url4, headers=headers, data=payload)
         print(response.text)
         
 doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00007")
