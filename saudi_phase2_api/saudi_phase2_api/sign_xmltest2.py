@@ -1,5 +1,5 @@
 import frappe
-frappe.init(site="dev.erpgulf.com")
+frappe.init(site="husna.erpgulf.com")
 frappe.connect()
 from subprocess import call
 import subprocess
@@ -11,7 +11,6 @@ import OpenSSL
 import chilkat2
 from lxml import etree
 import re
-
 
 def send_invoice_for_clearance_chilkat(invoiceHash, uuid, authorization, secret, signedXmlFilePath ):
         # Sending invoice for clearance through chilkat library - Farook
@@ -51,16 +50,15 @@ def send_invoice_for_clearance_chilkat(invoiceHash, uuid, authorization, secret,
         print("JSON Response:")
         # print(jsonResp.Emit())
 
-
-
 def send_invoice_for_clearance_normal(invoiceHash, uuid, authorization, secret, signedXmlFilePath):
         # Sending invoice for clearance through normal python library - Farook
         with open(signedXmlFilePath, "r") as file:
             xml = file.read().lstrip()
             base64_encoded = base64.b64encode(xml.encode("utf-8"))
-            print(base64_encoded)
+            # print(base64_encoded)
             base64_decoded = base64_encoded.decode("utf-8")
-            
+            # print(base64_decoded)
+            # print(xml)
         url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices"
 
         payload = json.dumps({
@@ -70,12 +68,11 @@ def send_invoice_for_clearance_normal(invoiceHash, uuid, authorization, secret, 
         })
         # sys.exit()
         # print(authorization)
-        headers = {
+        headers = { 
             'accept': 'application/json',
             'Accept-Language': 'en',
             'Accept-Version': 'V2',
             # 'Authorization': 'Basic ' + authorization,
-                                
             'Authorization': "Basic VFVsSlJERnFRME5CTTNsblFYZEpRa0ZuU1ZSaWQwRkJaVFJUYUhOMmVXNDNNREo1VUhkQlFrRkJRamRvUkVGTFFtZG5jV2hyYWs5UVVWRkVRV3BDYWsxU1ZYZEZkMWxMUTFwSmJXbGFVSGxNUjFGQ1IxSlpSbUpIT1dwWlYzZDRSWHBCVWtKbmIwcHJhV0ZLYXk5SmMxcEJSVnBHWjA1dVlqTlplRVo2UVZaQ1oyOUthMmxoU21zdlNYTmFRVVZhUm1ka2JHVklVbTVaV0hBd1RWSjNkMGRuV1VSV1VWRkVSWGhPVlZVeGNFWlRWVFZYVkRCc1JGSlRNVlJrVjBwRVVWTXdlRTFDTkZoRVZFbDVUVVJaZUUxNlJURk5la1V3VG14dldFUlVTVEJOUkZsNFRXcEZNVTE2UlRCT2JHOTNVMVJGVEUxQmEwZEJNVlZGUW1oTlExVXdSWGhFYWtGTlFtZE9Wa0pCYjFSQ1YwWnVZVmQ0YkUxU1dYZEdRVmxFVmxGUlRFVjNNVzlaV0d4b1NVaHNhRm95YUhSaU0xWjVUVkpKZDBWQldVUldVVkZFUlhkcmVFMXFZM1ZOUXpSM1RHcEZkMVpxUVZGQ1oyTnhhR3RxVDFCUlNVSkNaMVZ5WjFGUlFVTm5Ua05CUVZSVVFVczViSEpVVm10dk9YSnJjVFphV1dOak9VaEVVbHBRTkdJNVV6UjZRVFJMYlRkWldFb3JjMjVVVm1oTWEzcFZNRWh6YlZOWU9WVnVPR3BFYUZKVVQwaEVTMkZtZERoREwzVjFWVms1TXpSMmRVMU9ielJKUTB0cVEwTkJhVmwzWjFselIwRXhWV1JGVVZOQ1ozcERRbWRMVWl0TlNIZDRTRlJCWWtKblRsWkNRVkZOUmtSRmRHRkhSalZaV0hkNVRGUkplazVJZDNwTVZFVjRUV3BOZWsxU09IZElVVmxMUTFwSmJXbGFVSGxNUjFGQ1FWRjNVRTE2VFhoTlZGbDVUMFJaTlU1RVFYZE5SRUY2VFZFd2QwTjNXVVJXVVZGTlJFRlJlRTFVUVhkTlVrVjNSSGRaUkZaUlVXRkVRV2hoV1ZoU2FsbFRRWGhOYWtWWlRVSlpSMEV4VlVWRWQzZFFVbTA1ZGxwRFFrTmtXRTU2WVZjMWJHTXpUWHBOUWpCSFFURlZaRVJuVVZkQ1FsTm5iVWxYUkRaaVVHWmlZa3RyYlZSM1QwcFNXSFpKWWtnNVNHcEJaa0puVGxaSVUwMUZSMFJCVjJkQ1VqSlpTWG8zUW5GRGMxb3hZekZ1WXl0aGNrdGpjbTFVVnpGTWVrSlBRbWRPVmtoU09FVlNla0pHVFVWUFoxRmhRUzlvYWpGdlpFaFNkMDlwT0haa1NFNHdXVE5LYzB4dWNHaGtSMDVvVEcxa2RtUnBOWHBaVXpsRVdsaEtNRkpYTlhsaU1uaHpUREZTVkZkclZrcFViRnBRVTFWT1JreFdUakZaYTA1Q1RGUkZkVmt6U25OTlNVZDBRbWRuY2tKblJVWkNVV05DUVZGVFFtOUVRMEp1VkVKMVFtZG5ja0puUlVaQ1VXTjNRVmxhYVdGSVVqQmpSRzkyVEROU2VtUkhUbmxpUXpVMldWaFNhbGxUTlc1aU0xbDFZekpGZGxFeVZubGtSVloxWTIwNWMySkRPVlZWTVhCR1lWYzFNbUl5YkdwYVZrNUVVVlJGZFZwWWFEQmFNa1kyWkVNMWJtSXpXWFZpUnpscVdWZDRabFpHVG1GU1ZXeFBWbXM1U2xFd1ZYUlZNMVpwVVRCRmRFMVRaM2hMVXpWcVkyNVJkMHQzV1VsTGQxbENRbEZWU0UxQlIwZElNbWd3WkVoQk5reDVPVEJqTTFKcVkyMTNkV1Z0UmpCWk1rVjFXakk1TWt4dVRtaE1NamxxWXpOQmQwUm5XVVJXVWpCUVFWRklMMEpCVVVSQloyVkJUVUl3UjBFeFZXUktVVkZYVFVKUlIwTkRjMGRCVVZWR1FuZE5RMEpuWjNKQ1owVkdRbEZqUkVGNlFXNUNaMnR5UW1kRlJVRlpTVE5HVVc5RlIycEJXVTFCYjBkRFEzTkhRVkZWUmtKM1RVTk5RVzlIUTBOelIwRlJWVVpDZDAxRVRVRnZSME5EY1VkVFRUUTVRa0ZOUTBFd1owRk5SVlZEU1ZGRVQxQXdaakJFY21oblpVUlVjbFpNZEVwMU9HeFhhelJJU25SbFkyWTFabVpsVWt4blpVUTRZMlZWWjBsblpFSkNUakl4U1RNM2FYTk5PVlZ0VTFGbE9IaFNjRWh1ZDA5NFNXYzNkMDR6V1RKMlZIQnpVR2hhU1QwPTpFcGo2OUdoOFRNTXpZZktsdEx2MW9tWktyaWUwc1A2TEF2YW1iUUZIVGd3PQ==",
             'Content-Type': 'application/json'
         }
@@ -85,7 +82,7 @@ def send_invoice_for_clearance_normal(invoiceHash, uuid, authorization, secret, 
             # print(response.text)
         except Exception as e:
             
-            print(str(e))
+            print(str(e)) 
             sys.exit()
         print(response.text)
 
@@ -95,9 +92,7 @@ def get_signed_xml_invoice_for_clearance():
         
         # signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXml.xml"
         signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXML_withQR.xml"
-        
         xmlSigned = chilkat2.Xml()
-
         success = xmlSigned.LoadXmlFile(signedXmlFilePath)
         if (success == False):
             print(xmlSigned.LastErrorText)
@@ -137,6 +132,7 @@ def create_security_token_from_csr():
 
         response = requests.request("POST", url, headers=headers, data=payload)
         data=json.loads(response.text)
+        # print(data)
         return data["binarySecurityToken"],  data["secret"]
 
 
