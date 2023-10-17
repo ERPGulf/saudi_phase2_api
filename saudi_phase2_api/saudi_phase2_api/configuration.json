@@ -1,0 +1,8 @@
+{
+    "username": "your_username_here",
+    "password": "your_password_here",
+    "private_key_path": "PrivateKey.pem",
+    "public_key_path": "publickey.pem",
+    "certificate_path": "taxpayer.csr",
+    "url": "https://zatca.example.com/api/submit_invoice"
+  }

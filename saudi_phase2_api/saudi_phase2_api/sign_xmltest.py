@@ -1,5 +1,5 @@
 import frappe
-frappe.init(site="husna.erpgulf.com")
+frappe.init(site="dev.erpgulf.com")
 frappe.connect()
 from subprocess import call
 import subprocess
