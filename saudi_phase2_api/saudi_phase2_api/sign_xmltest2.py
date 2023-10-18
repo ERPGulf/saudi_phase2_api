@@ -52,6 +52,9 @@ def send_invoice_for_clearance_chilkat(invoiceHash, uuid, authorization, secret,
 
 def send_invoice_for_clearance_normal(invoiceHash, uuid, authorization, secret, signedXmlFilePath):
         # Sending invoice for clearance through normal python library - Farook
+        sys.exit()
+        signedXmlFilePath = "/opt/bench3/frappe-bench/sites/signedXML_withQR.xml"
+        print("signedXmlFilePath:   " + signedXmlFilePath)
         with open(signedXmlFilePath, "r") as file:
             xml = file.read().lstrip()
             base64_encoded = base64.b64encode(xml.encode("utf-8"))
@@ -314,8 +317,6 @@ xmlQR.UpdateChildContent("cbc:ID","QR")
 xmlQR.UpdateAttrAt("cac:Attachment|cbc:EmbeddedDocumentBinaryObject",True,"mimeCode","text/plain")
 # xmlQR.UpdateChildContent("cac:Attachment|cbc:EmbeddedDocumentBinaryObject",bdTlv.GetEncoded("base64"))
 xmlQR.UpdateChildContent("cac:Attachment|cbc:EmbeddedDocumentBinaryObject","Testing my QR Code 333")
-xmlQR.RemoveChildWithContent("*XXXX*")
-
 
 
 sbSignedXml = chilkat2.StringBuilder()
@@ -328,19 +329,43 @@ if (success == False):
 sbReplaceStr = chilkat2.StringBuilder()
 xmlQR.EmitXmlDecl = False
 xmlQR.EmitCompact = True
-sbReplaceStr.Append(xmlQR.GetXml())
-sbReplaceStr.Append("<cac:Signature>")
-success = sbSignedXml.ReplaceFirst("<cac:Signature>",sbReplaceStr.GetAsString())
+
+# print(xmlQR.GetXml())  # this is the new with My QR Code 333
+
+
+
+# sbReplaceStr.Append(xmlQR.GetXml())  
+
+
+print("  ")
+print(sbReplaceStr.GetAsString())
+print("  ")
+
+print("  ")
+print(sbReplaceStr.GetAsString())
+print("  ")
+# sbReplaceStr.Append("<cac:Signature>")
+
+
+print("  ")
+print(sbReplaceStr.GetAsString())
+print("  ")
+
+sample_2 = "<cac:Signature>"
+sample_string = '''XXXX'''
+# print(sbReplaceStr.GetAsString())
+success = sbSignedXml.ReplaceFirst(sample_string,bdTlv.GetEncoded("base64"))
 
 if success == False:
     print("Failed to replace <cac:Signature> with QR code in the signed XML.")
     sys.exit()
 else:
+    print("  ")
     print("replace success")
-sys.exit()
+    
 
 print(sbSignedXml.GetAsString())
-sys.exit()
+# sys.exit()
 
 
 if (success == False):
