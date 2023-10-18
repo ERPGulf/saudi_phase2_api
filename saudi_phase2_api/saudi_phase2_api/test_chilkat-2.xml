@@ -40,9 +40,7 @@
         <cac:Attachment>
             <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">ARlBbC........FAau5g</cbc:EmbeddedDocumentBinaryObject>
         </cac:Attachment>
-</cac:AdditionalDocumentReference>
-
-<cac:Signature>
+</cac:AdditionalDocumentReference><cac:Signature>
       <cbc:ID>urn:oasis:names:specification:ubl:signature:Invoice</cbc:ID>
       <cbc:SignatureMethod>urn:oasis:names:specification:ubl:dsig:enveloped:xades</cbc:SignatureMethod>
 </cac:Signature><cac:AccountingSupplierParty>

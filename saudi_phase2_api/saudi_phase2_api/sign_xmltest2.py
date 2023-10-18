@@ -1,5 +1,5 @@
 import frappe
-frappe.init(site="husna.erpgulf.com")
+frappe.init(site="dev.erpgulf.com")
 frappe.connect()
 from subprocess import call
 import subprocess
@@ -58,7 +58,7 @@ def send_invoice_for_clearance_normal(invoiceHash, uuid, authorization, secret, 
             # print(base64_encoded)
             base64_decoded = base64_encoded.decode("utf-8")
             # print(base64_decoded)
-            # print(xml)
+            print(xml)
         url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices"
 
         payload = json.dumps({
@@ -90,8 +90,8 @@ def send_invoice_for_clearance_normal(invoiceHash, uuid, authorization, secret, 
 def get_signed_xml_invoice_for_clearance():
         #Creating and returning sbDigestValue, xmlSigned, signedXmlFilePath - Farook
         
-        # signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXml.xml"
-        signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXML_withQR.xml"
+        signedXmlFilePath = "/opt/bench3/frappe-bench/sites/signedXml.xml"
+        # signedXmlFilePath = "/opt/bench3/frappe-bench/sites/signedXML_withQR.xml"
         xmlSigned = chilkat2.Xml()
         success = xmlSigned.LoadXmlFile(signedXmlFilePath)
         if (success == False):
@@ -140,7 +140,7 @@ def create_security_token_from_csr():
 
 success = True
 sbXml = chilkat2.StringBuilder()
-success = sbXml.LoadFile("/opt/oxy/frappe-bench/apps/saudi_phase2_api/saudi_phase2_api/saudi_phase2_api/test_chilkat.xml","utf-8")
+success = sbXml.LoadFile("/opt/bench3/frappe-bench/apps/saudi_phase2_api/saudi_phase2_api/saudi_phase2_api/test_chilkat.xml","utf-8")
 if (success == False):
     print("Failed to load XML file to be signed.")
     sys.exit()
@@ -180,7 +180,7 @@ gen.AddObjectRef("xadesSignedProperties","sha256","","","http://www.w3.org/2000/
 
 
 certFromPfx = chilkat2.Cert()
-success = certFromPfx.LoadPfxFile("/opt/oxy/frappe-bench/sites/mycert.pfx","Friday2000@T")
+success = certFromPfx.LoadPfxFile("/opt/bench3/frappe-bench/sites/mycert.pfx","Friday2000@T")
 if (success != True):
     print(certFromPfx.LastErrorText)
     sys.exit()
@@ -303,16 +303,27 @@ bdTlv.AppendBd(bdCertSig)
 qr_base64 = bdTlv.GetEncoded("base64")
 # print("QR: " + qr_base64)
 
+
+
 xmlQR = chilkat2.Xml()
+
+
+
 xmlQR.Tag = "cac:AdditionalDocumentReference"
 xmlQR.UpdateChildContent("cbc:ID","QR")
 xmlQR.UpdateAttrAt("cac:Attachment|cbc:EmbeddedDocumentBinaryObject",True,"mimeCode","text/plain")
-xmlQR.UpdateChildContent("cac:Attachment|cbc:EmbeddedDocumentBinaryObject",bdTlv.GetEncoded("base64"))
+# xmlQR.UpdateChildContent("cac:Attachment|cbc:EmbeddedDocumentBinaryObject",bdTlv.GetEncoded("base64"))
+xmlQR.UpdateChildContent("cac:Attachment|cbc:EmbeddedDocumentBinaryObject","Testing my QR Code 333")
+xmlQR.RemoveChildWithContent("*XXXX*")
+
+
+
 sbSignedXml = chilkat2.StringBuilder()
 success = sbSignedXml.LoadFile(signedXmlFilePath,"utf-8")
 if (success == False):
     print("Failed to load previously signed XML file.")
     sys.exit()
+
 
 sbReplaceStr = chilkat2.StringBuilder()
 xmlQR.EmitXmlDecl = False
@@ -320,10 +331,26 @@ xmlQR.EmitCompact = True
 sbReplaceStr.Append(xmlQR.GetXml())
 sbReplaceStr.Append("<cac:Signature>")
 success = sbSignedXml.ReplaceFirst("<cac:Signature>",sbReplaceStr.GetAsString())
+
+if success == False:
+    print("Failed to replace <cac:Signature> with QR code in the signed XML.")
+    sys.exit()
+else:
+    print("replace success")
+sys.exit()
+
+print(sbSignedXml.GetAsString())
+sys.exit()
+
+
 if (success == False):
     print("Did not find <cac:Signature> in the signed XML")
     sys.exit()
+
 success = sbSignedXml.WriteFile("signedXML_withQR.xml","utf-8",False)
+
+
+
 verifier = chilkat2.XmlDSig()
 success = verifier.LoadSignatureSb(sbSignedXml)
 if (success != True):
