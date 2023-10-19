@@ -326,8 +326,8 @@ def qrcode_Creation():
 
     print("success qr code creation")
     return bdTlv
-qrcode_Creation()
-sys.exit()
+# qrcode_Creation()
+# sys.exit()
 def add_QRcodeto_Xml():
     bdTlv = qrcode_Creation()
     signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXml.xml"    # doubt to pass signedxml file path
