@@ -36,7 +36,7 @@
                         </ds:Reference>
                         <ds:Reference Type="http://www.w3.org/2000/09/xmldsig#SignatureProperties" URI="#xadesSignedProperties">
                            <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-                           <ds:DigestValue>YjhjY2Y3NzI2NDZlODljMDc0MGUzOGEzYTA1MDdlNTlmYWVhNmRmY2Y5ZGU3OTgxODE2NzU5NzkzNTk1ZDdhMA==</ds:DigestValue>
+                           <ds:DigestValue>ZTc5ODRiZTM1NWJhNGE0NTQ3N2Y2YmE5NTNkODNkZWE0ZGMyYmYxMzVlOGQ2YTE5YjUwNjMyNGU1MDM4YTIxZg==</ds:DigestValue>
                         </ds:Reference>
                      </ds:SignedInfo>
                      <ds:SignatureValue>jgE3IzqhIRs2xNp2XPqd+lC5W4JWAhdkNz5Xd8kJAHBHU3Xev7QPAdlys9PKFFSusBOZJQJbrLCy1f00sgqaRvLgtY5umW7LW2rbbpK78hnzmcn18hzsdr+7cxS+Ddyri5i+uWb9AjMVhUGsVkqNr2Z1uP72so2fmIW8iADRtrkOZaX2GIza8l60hCwPZStZg4SfVEVnNUqyWmFVf/XvEbawgAX4HKjxb04NIIxiPXYQVtf0pjHVAEbuL/jzv+1QZFN+4M4ovF1oZzZP5K4GYdLfDoulXBlWglQXlRr/0HcbbxHQeh3BrTlzIyWREZP8ylwF5YeQBLqldGsdJ2CutQ==</ds:SignatureValue>
@@ -49,7 +49,7 @@
                         <xades:QualifyingProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Target="signature">
                            <xades:SignedProperties Id="xadesSignedProperties">
                               <xades:SignedSignatureProperties>
-                                 <xades:SigningTime>2023-10-18T10:19:48Z</xades:SigningTime>
+                                 <xades:SigningTime>2023-10-19T11:11:51Z</xades:SigningTime>
                                  <xades:SigningCertificate>
                                     <xades:Cert>
                                        <xades:CertDigest>
@@ -101,9 +101,9 @@
       </cac:Attachment>
    </cac:AdditionalDocumentReference>
    <cac:Signature>
-      <cbc:ID>urn:oasis:names:specification:ubl:signature:Invoice</cbc:ID>
-      <cbc:SignatureMethod>urn:oasis:names:specification:ubl:dsig:enveloped:xades</cbc:SignatureMethod>
-   </cac:Signature>
+    <cbc:ID>urn:oasis:names:specification:ubl:signature:Invoice</cbc:ID>
+    <cbc:SignatureMethod>urn:oasis:names:specification:ubl:dsig:enveloped:xades</cbc:SignatureMethod>
+  </cac:Signature>
 
    <cac:AccountingSupplierParty>
       <cac:Party>
