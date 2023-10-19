@@ -6,12 +6,12 @@ import subprocess
 import requests
 import json
 import base64
+import qrcode
 import sys
 import OpenSSL
 import chilkat2
 from lxml import etree
 import re
-
 def send_invoice_for_clearance_chilkat(invoiceHash, uuid, authorization, secret, signedXmlFilePath ):
         # Sending invoice for clearance through chilkat library - Farook
         bd = chilkat2.BinData()
@@ -49,18 +49,24 @@ def send_invoice_for_clearance_chilkat(invoiceHash, uuid, authorization, secret,
         print("JSON Response:")
         # print(jsonResp.Emit())
 
-def send_invoice_for_clearance_normal(invoiceHash, uuid, authorization, secret, signedXmlFilePath):
+
+def send_invoice_for_clearance_normal():
+        
         # Sending invoice for clearance through normal python library - Farook
-        sys.exit()
-        signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXML_withQR.xml"
+        # sys.exit()
+        invoiceHash = get_InvoiceHash()
+        
+        signedXmlFilePath = "/opt/bench3/frappe-bench/sites/signedXML_withQR.xml"
         print("signedXmlFilePath:   " + signedXmlFilePath)
+        token,secret = create_security_token_from_csr()
+        uuid =get_UUID()
         with open(signedXmlFilePath, "r") as file:
             xml = file.read().lstrip()
             base64_encoded = base64.b64encode(xml.encode("utf-8"))
             # print(base64_encoded)
             base64_decoded = base64_encoded.decode("utf-8")
             # print(base64_decoded)
-            print(xml)
+            # print(xml)
         url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices"
 
         payload = json.dumps({
@@ -88,12 +94,11 @@ def send_invoice_for_clearance_normal(invoiceHash, uuid, authorization, secret, 
             sys.exit()
         print(response.text)
 
-
 def get_signed_xml_invoice_for_clearance():
         #Creating and returning sbDigestValue, xmlSigned, signedXmlFilePath - Farook
         
-        signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXml.xml"
-        # signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXML_withQR.xml"
+        # signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXml.xml"
+        signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXML_withQR.xml"
         xmlSigned = chilkat2.Xml()
         success = xmlSigned.LoadXmlFile(signedXmlFilePath)
         if (success == False):
@@ -111,15 +116,12 @@ def get_signed_xml_invoice_for_clearance():
 
 def create_security_token_from_csr():
         #Creating and returning token, secret - Farook
-        
         try:
                 with open("mycscsr2.csr", "r") as f:
                     csr_contents = f.read()
         except Exception as e:
                 print(str(e))
-
         base64csr = base64.b64encode(csr_contents.encode("utf-8")).decode("utf-8")
-        
         url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance"
         payload = json.dumps({
         "csr": base64csr
@@ -131,13 +133,10 @@ def create_security_token_from_csr():
         'Content-Type': 'application/json',
         'Cookie': 'TS0106293e=0132a679c07382ce7821148af16b99da546c13ce1dcddbef0e19802eb470e539a4d39d5ef63d5c8280b48c529f321e8b0173890e4f'
         }
-
         response = requests.request("POST", url, headers=headers, data=payload)
         data=json.loads(response.text)
         # print(data)
         return data["binarySecurityToken"],  data["secret"]
-
-
 #All functions end here. Execution starts from here.
 def add_Static_Valueto_Xml():
     success = True
@@ -178,9 +177,9 @@ def add_Static_Valueto_Xml():
     gen.AddSameDocRef2("","sha256",xml1,"")
     gen.SetRefIdAttr("","invoiceSignedData")
     gen.AddObjectRef("xadesSignedProperties","sha256","","","http://www.w3.org/2000/09/xmldsig#SignatureProperties")
-    
+    return gen,sbXml  
 def load_certificate(): 
-    gen= add_Static_Valueto_Xml(gen,sbXml)
+    gen ,sbXml= add_Static_Valueto_Xml()
     certFromPfx = chilkat2.Cert()
     success = certFromPfx.LoadPfxFile("/opt/oxy/frappe-bench/sites/mycert.pfx","Friday2000@T")
     if (success != True):
@@ -199,13 +198,18 @@ def load_certificate():
     if (success != True):
         print(gen.LastErrorText)
         sys.exit()
-    # else:
-    #     print("success 69")
+    else:
+        print("success 69")
+    return sbXml
+# load_certificate()
    
-
+def create_File_SignedXML():
+    sbXml= load_certificate()
     success = sbXml.WriteFile("signedXml.xml","utf-8",False)
     # print(sbXml.GetAsString())
+    return sbXml
 def zatca_Verification():
+    sbXml = create_File_SignedXML()
     verifier = chilkat2.XmlDSig()
     success = verifier.LoadSignatureSb(sbXml)
     if (success != True):
@@ -223,6 +227,7 @@ def zatca_Verification():
         verifyIdx = verifyIdx + 1
 
     print("All signatures were successfully verified.")
+# zatca_Verification()
 def qrcode_Creation():
     sellerName = "Firoz Ashraf"
     vatNumber = "1234567891"
@@ -252,7 +257,7 @@ def qrcode_Creation():
     bdTlv.AppendCountedString(1,False,vatTotal,charset)
 
     sbDigestValue, xmlSigned, signedXmlFilePath = get_signed_xml_invoice_for_clearance()
-    print("178")
+    print("success upto 153")
     tag = 6
     bdTlv.AppendByte(tag)
     bdTlv.AppendByte(sbDigestValue.Length)
@@ -302,9 +307,30 @@ def qrcode_Creation():
     bdTlv.AppendBd(bdCertSig)
     # print("Certificate signature:")
     # print(bdCertSig.GetEncoded("hex"))
+    
     qr_base64 = bdTlv.GetEncoded("base64")
     # print("QR: " + qr_base64)
+
+#code which i tried to short the qr content
+#     corrected_invoice_data = bdTlv.GetEncoded("base64") 
+# # Create a QR code instance
+#     qr = qrcode.QRCode(
+#         version=1,
+#         error_correction=qrcode.constants.ERROR_CORRECT_L,
+#         box_size=10,
+#     border=4,
+# )
+#     qr.add_data(corrected_invoice_data)
+#     qr.make(fit=True)
+#     print(corrected_invoice_data)  # Display the corrected QR data as text
+
+    print("success qr code creation")
+    return bdTlv
+qrcode_Creation()
+sys.exit()
 def add_QRcodeto_Xml():
+    bdTlv = qrcode_Creation()
+    signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXml.xml"    # doubt to pass signedxml file path
     xmlQR = chilkat2.Xml()
     xmlQR.Tag = "cac:AdditionalDocumentReference"
     xmlQR.UpdateChildContent("cbc:ID","QR")
@@ -316,28 +342,25 @@ def add_QRcodeto_Xml():
     if (success == False):
         print("Failed to load previously signed XML file.")
         sys.exit()
+    else:
+         print("Success at 326")
+    # sys.exit()
     sbReplaceStr = chilkat2.StringBuilder()
     xmlQR.EmitXmlDecl = False
     xmlQR.EmitCompact = True
-
     # print(xmlQR.GetXml())  # this is the new with My QR Code 333
-
     # sbReplaceStr.Append(xmlQR.GetXml())  
-    print("  ")
-    print(sbReplaceStr.GetAsString())
-    print("  ")
-
-    print("  ")
-    print(sbReplaceStr.GetAsString())
-    print("  ")
-    # sbReplaceStr.Append("<cac:Signature>")
-
-
-    print("  ")
-    print(sbReplaceStr.GetAsString())
-    print("  ")
-
-    sample_2 = "<cac:Signature>"
+    # print("  ")
+    # print(sbReplaceStr.GetAsString())
+    # print("  ")
+    # print("  ")
+    # print(sbReplaceStr.GetAsString())
+    # print("  ")
+    # # sbReplaceStr.Append("<cac:Signature>")
+    # print("  ")
+    # print(sbReplaceStr.GetAsString())
+    # print("  ")
+    # sample_2 = "<cac:Signature>"
     sample_string = '''GsiuvGjvchjbFhibcDhjv1886G'''
     # print(sbReplaceStr.GetAsString())
     success = sbSignedXml.ReplaceFirst(sample_string,bdTlv.GetEncoded("base64"))
@@ -355,9 +378,11 @@ def add_QRcodeto_Xml():
         sys.exit()
 
     success = sbSignedXml.WriteFile("signedXML_withQR.xml","utf-8",False)
-
+# add_QRcodeto_Xml()
+    return sbSignedXml
 
 def verify_SignXML_withQR():
+    sbSignedXml = add_QRcodeto_Xml()
     verifier = chilkat2.XmlDSig()
     success = verifier.LoadSignatureSb(sbSignedXml)
     if (success != True):
@@ -378,11 +403,12 @@ def verify_SignXML_withQR():
 
         verifyIdx = verifyIdx + 1
     print("All signatures were successfully verified.")
-    
-def get_InvoiceHash():
+# verify_SignXML_withQR()
+def signedXml_Withtoken():
     otp = "123345"
-
+    signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXml.xml"    # doubt to pass signedxml file path
     token,secret = create_security_token_from_csr()
+    print("success line upto 403")
     # print(token)
     # print(secret)
     # sys.exit()
@@ -393,11 +419,23 @@ def get_InvoiceHash():
     if (success == False):
         print(signedXml.LastErrorText)
         sys.exit()
+    else:
+         print("success 407")
+    return signedXml
+def get_InvoiceHash():
+    signedXml = signedXml_Withtoken()
     invoiceHash = signedXml.GetChildContent("ext:UBLExtensions|ext:UBLExtension|ext:ExtensionContent|sig:UBLDocumentSignatures|sac:SignatureInformation|ds:Signature|ds:SignedInfo|ds:Reference[0]|ds:DigestValue")
+    # print(invoiceHash)
+    # return 
+    return invoiceHash
+# get_InvoiceHash()
 
 def  get_UUID():
+    signedXml = signedXml_Withtoken()
     cbc_UUID = signedXml.GetChildContent("cbc:UUID")
+    print(cbc_UUID)
+    return cbc_UUID
+# get_UUID()
 
-send_invoice_for_clearance_normal(invoiceHash,cbc_UUID,token,secret, signedXmlFilePath)
-
+send_invoice_for_clearance_normal()
 sys.exit()
