@@ -85,7 +85,7 @@ def create_security_token_from_csr():
         return data["binarySecurityToken"],  data["secret"]
 
 def  get_Issue_Time():
-    doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00007-1")
+    doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00010")
     time = get_time(doc.posting_time)
     issue_time = time.strftime("%H:%M:%S")
     return issue_time
@@ -98,8 +98,10 @@ def get_Tax_for_Item(full_string,item):
 
 def get_Actual_Value_And_Rendering():
     e_invoice_items = []
-    doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00007-1") 
+    doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00010") 
     company_doc = frappe.get_doc("Company", doc.company)
+    customer_doc= frappe.get_doc("Customer",doc.customer)
+    # print(customer_doc.custom_state)
     for item in doc.items:
         item_tax_amount,item_tax_percentage =  get_Tax_for_Item(doc.taxes[0].item_wise_tax_detail,item.item_code)
         item_data = {
@@ -112,16 +114,16 @@ def get_Actual_Value_And_Rendering():
             "price_list_rate": item.price_list_rate,
         }
         e_invoice_items.append(item_data)
-        address_str= doc.address_display
-        address_lines = address_str.split('<br>')
-        if len(address_lines) >= 4:
-                    address_line1, address_line2, state, country = address_lines[:4]           
-        else:
-                    print("")
+        # address_str= doc.address_display
+        # address_lines = address_str.split('<br>')
+        # if len(address_lines) >= 4:
+        #             address_line1, address_line2, state, country = address_lines[:4]           
+        # else:
+        #             print("")
         context = { "doc": {
                         "e_invoice_items": e_invoice_items,
                         "company_tax_id":company_doc.tax_id,
-                        "uuid":"3cf5ee18-ee25-44ea-a444-2c37ba7f28be",
+                        "uuid":doc.custom_uuid,
                         "posting_date": doc.posting_date,
                         "qr_code": "GsiuvGjvchjbFhibcDhjv1886G",
                         "posting_time":get_Issue_Time(),
@@ -136,27 +138,28 @@ def get_Actual_Value_And_Rendering():
                         "grand_total": doc.grand_total,
                         "tax_rate":doc.taxes[0].rate,
                         "company_address_data":{
-                                    "sub":"road",
-                                    "building_no": "1233",
-                                    "street": address_line1,
-                                    "city": state,
-                                    "pincode": "12454",
-                                    "state": country,
-                                    "plot_id_no": "12352",},
+                                    "sub":company_doc.custom_sub,
+                                    "building_no": company_doc.custom_build_no,
+                                    "street": company_doc.custom_street,
+                                    "city":company_doc.custom_city,
+                                    "pincode": company_doc.custom_pincode,
+                                    "state": company_doc.custom_state,
+                                    "plot_id_no": company_doc.custom_plot_id_no,},
                         "customer_address_data": {
-                                    "street": "valluvambram",
-                                    "building_no": "2157",
-                                    "sub":"near airport road",
-                                    "city": "england",
-                                    "pincode": "12454",
-                                    "state": "kerala",
-                                    "plot_id_no": "12512",   },}}
+                                    "street": customer_doc.custom_street,
+                                    "building_no": customer_doc.custom_building_no,
+                                    "sub":customer_doc.custom_sub,
+                                    "city":customer_doc.custom_city,
+                                    "pincode": customer_doc.custom_pincode,
+                                    "state": customer_doc.custom_state,
+                                    "plot_id_no":customer_doc.custom_plot_id_no  },}}
         invoice_xml = frappe.render_template("saudi_phase2_api/saudi_phase2_api/e_test.xml", context)
         print(invoice_xml)
         with open("e_invoice.xml", "w") as file:
-            file.write(invoice_xml) 
-doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00007-1")
-get_Actual_Value_And_Rendering()
+            file.write(invoice_xml)
+            
+doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00010")
+# get_Actual_Value_And_Rendering()
 
 def add_Static_Valueto_Xml():
     success = True
@@ -416,16 +419,18 @@ def  get_UUID(signedXml):
     print(cbc_UUID)
     return uuid
 
-gen ,sbXml  =  add_Static_Valueto_Xml()  # 
-sbXml = load_certificate(gen,sbXml)
-sbXml= create_File_SignedXML(sbXml)
-zatca_Verification(sbXml)  # its not mandatory just for verify
-bdTlv = qrcode_Creation()
-sbSignedXml= add_QRcode_To_Xml(bdTlv)
-verify_SignXML_withQR(sbSignedXml)  # not  mandatory only for verify
-signedXml=signedXml_Withtoken()
-invoiceHash=get_InvoiceHash(signedXml)     #only for getting  invoice hash
-uuid=get_UUID(signedXml)
-send_invoice_for_clearance_normal(uuid,invoiceHash)
-sys.exit()
-
+def final_calls():
+        get_Actual_Value_And_Rendering()
+        gen ,sbXml  =  add_Static_Valueto_Xml()  # 
+        sbXml = load_certificate(gen,sbXml)
+        sbXml= create_File_SignedXML(sbXml)
+        zatca_Verification(sbXml)  # its not mandatory just for verify
+        bdTlv = qrcode_Creation()
+        sbSignedXml= add_QRcode_To_Xml(bdTlv)
+        verify_SignXML_withQR(sbSignedXml)  # not  mandatory only for verify
+        signedXml=signedXml_Withtoken()
+        invoiceHash=get_InvoiceHash(signedXml)     #only for getting  invoice hash
+        uuid=get_UUID(signedXml)
+        send_invoice_for_clearance_normal(uuid,invoiceHash)
+        sys.exit()
+final_calls()
