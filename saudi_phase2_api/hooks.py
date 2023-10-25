@@ -215,4 +215,4 @@ app_license = "mit"
 #	"saudi_phase2_api.auth.validate"
 # ]
 doctype_js = {
-    "Sales_Invoice" : "public/js/our_sales_invoice.js"}
+    "Sales Invoice" : "public/js/our_sales_invoice.js"}

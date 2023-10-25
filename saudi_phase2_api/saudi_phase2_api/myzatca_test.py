@@ -15,8 +15,12 @@ import OpenSSL
 import chilkat2
 from lxml import etree
 import re
-def button_click():
-    return "hello"
+
+@frappe.whitelist()
+def clickbutton():
+    return "hello ZATCA"
+
+
 def send_invoice_for_clearance_normal(uuid,invoiceHash):
                     # Sending invoice for clearance through normal python library 
                     signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXML_withQR.xml"
@@ -85,7 +89,7 @@ def create_security_token_from_csr():
         return data["binarySecurityToken"],  data["secret"]
 
 def  get_Issue_Time():
-    doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00010")
+    doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00011")
     time = get_time(doc.posting_time)
     issue_time = time.strftime("%H:%M:%S")
     return issue_time
@@ -98,7 +102,7 @@ def get_Tax_for_Item(full_string,item):
 
 def get_Actual_Value_And_Rendering():
     e_invoice_items = []
-    doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00010") 
+    doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00011") 
     company_doc = frappe.get_doc("Company", doc.company)
     customer_doc= frappe.get_doc("Customer",doc.customer)
     # print(customer_doc.custom_state)
@@ -121,6 +125,7 @@ def get_Actual_Value_And_Rendering():
         # else:
         #             print("")
         context = { "doc": {
+                        # "invoice number":doc.custom_invoice_num,
                         "e_invoice_items": e_invoice_items,
                         "company_tax_id":company_doc.tax_id,
                         "uuid":doc.custom_uuid,
@@ -158,7 +163,7 @@ def get_Actual_Value_And_Rendering():
         with open("e_invoice.xml", "w") as file:
             file.write(invoice_xml)
             
-doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00010")
+doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00011")
 # get_Actual_Value_And_Rendering()
 
 def add_Static_Valueto_Xml():
@@ -419,6 +424,7 @@ def  get_UUID(signedXml):
     print(cbc_UUID)
     return uuid
 
+@frappe.whitelist()
 def final_calls():
         get_Actual_Value_And_Rendering()
         gen ,sbXml  =  add_Static_Valueto_Xml()  # 
