@@ -31,7 +31,7 @@
    <cbc:LineCountNumeric>{{doc.lineCount}}</cbc:LineCountNumeric>
    <cac:AdditionalDocumentReference>
       <cbc:ID>{{doc.document_id}}</cbc:ID>
-      <cbc:UUID>46531</cbc:UUID>
+      <cbc:UUID>{{doc.doc_uuid}}</cbc:UUID>
    </cac:AdditionalDocumentReference>
    <cac:AdditionalDocumentReference>
       <cbc:ID>PIH</cbc:ID>
@@ -149,7 +149,7 @@
       <cac:Item>
          <cbc:Name>{{ item.item_code}}</cbc:Name>
          <cac:ClassifiedTaxCategory>
-            <cbc:ID>S</cbc:ID>
+            <cbc:ID>{{item.item_character}}</cbc:ID>
             <cbc:Percent>{{item.item_tax_percentage}}</cbc:Percent>
             <cac:TaxScheme>
                <cbc:ID>VAT</cbc:ID>

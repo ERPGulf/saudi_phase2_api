@@ -4,6 +4,9 @@ app_publisher = "ERPGulf"
 app_description = "Saudi VAT Phase-2 implementation according to new Zatca API realease"
 app_email = "support@ERPGulf.com"
 app_license = "mit"
+
+from frappe import _
+from . import __version__ as app_version
 # required_apps = []
 
 # Includes in <head>
@@ -216,3 +219,16 @@ app_license = "mit"
 # ]
 doctype_js = {
     "Sales Invoice" : "public/js/our_sales_invoice.js"}
+
+
+fixtures=[
+    {"dt":"Sales Invoice","filter":[["module","=","Saudi Phase2 Api"]]}
+    ]
+
+fixtures=[
+    {"dt":"Customer","filter":[["module","=","Saudi Phase2 Api"]]}
+    ]
+
+fixtures=[
+    {"dt":"Company","filter":[["module","=","Saudi Phase2 Api"]]}
+    ]
