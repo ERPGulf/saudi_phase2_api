@@ -16,7 +16,7 @@ import chilkat2
 from lxml import etree
 import re
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def clickbutton():
     return "hello ZATCA"
 
@@ -88,8 +88,8 @@ def create_security_token_from_csr():
         data=json.loads(response.text)
         return data["binarySecurityToken"],  data["secret"]
 
-def  get_Issue_Time():
-    doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00011")
+def  get_Issue_Time(invoice_number):
+    doc = frappe.get_doc("Sales Invoice", invoice_number)
     time = get_time(doc.posting_time)
     issue_time = time.strftime("%H:%M:%S")
     return issue_time
@@ -100,9 +100,9 @@ def get_Tax_for_Item(full_string,item):
     tax_amount = data.get(item, [0, 0])[1]
     return tax_amount,tax_percentage
 
-def get_Actual_Value_And_Rendering():
+def get_Actual_Value_And_Rendering(invoice_number):
     e_invoice_items = []
-    doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00011") 
+    doc = frappe.get_doc("Sales Invoice", invoice_number) 
     company_doc = frappe.get_doc("Company", doc.company)
     customer_doc= frappe.get_doc("Customer",doc.customer)
     # print(customer_doc.custom_state)
@@ -118,24 +118,22 @@ def get_Actual_Value_And_Rendering():
             "price_list_rate": item.price_list_rate,
         }
         e_invoice_items.append(item_data)
-        # address_str= doc.address_display
-        # address_lines = address_str.split('<br>')
-        # if len(address_lines) >= 4:
-        #             address_line1, address_line2, state, country = address_lines[:4]           
-        # else:
-        #             print("")
         context = { "doc": {
-                        # "invoice number":doc.custom_invoice_num,
+                        "acccustid":customer_doc.custom_accounting_customer_id,
+                        "accsupid":company_doc.custom_accounting_supplier_party_id,
+                        "invoice_number":doc.custom_invoice,
+                        "invoice_type_code":doc.custom_invoice_type_code,
+                        "payment_code":doc.custom_payment_code,
+                        "lineCount":doc.custom_total_no_of_line,
                         "e_invoice_items": e_invoice_items,
                         "company_tax_id":company_doc.tax_id,
                         "uuid":doc.custom_uuid,
                         "posting_date": doc.posting_date,
                         "qr_code": "GsiuvGjvchjbFhibcDhjv1886G",
-                        "posting_time":get_Issue_Time(),
+                        "posting_time":get_Issue_Time(invoice_number),
                         "company": doc.company,
                         "currency":doc.currency,
                         "customer": doc.customer,
-                        "name": doc.name,
                         "total": doc.base_net_total,                                       
                         "pih": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
                         "total_taxes_and_charges": doc.base_total_taxes_and_charges,
@@ -149,7 +147,8 @@ def get_Actual_Value_And_Rendering():
                                     "city":company_doc.custom_city,
                                     "pincode": company_doc.custom_pincode,
                                     "state": company_doc.custom_state,
-                                    "plot_id_no": company_doc.custom_plot_id_no,},
+                                    "plot_id_no": company_doc.custom_plot_id_no,
+                                    "country":company_doc.custom_country_name},
                         "customer_address_data": {
                                     "street": customer_doc.custom_street,
                                     "building_no": customer_doc.custom_building_no,
@@ -157,13 +156,14 @@ def get_Actual_Value_And_Rendering():
                                     "city":customer_doc.custom_city,
                                     "pincode": customer_doc.custom_pincode,
                                     "state": customer_doc.custom_state,
-                                    "plot_id_no":customer_doc.custom_plot_id_no  },}}
+                                    "plot_id_no":customer_doc.custom_plot_id_no,
+                                     "country":customer_doc.custom_country},}}
         invoice_xml = frappe.render_template("saudi_phase2_api/saudi_phase2_api/e_test.xml", context)
         print(invoice_xml)
         with open("e_invoice.xml", "w") as file:
             file.write(invoice_xml)
             
-doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00011")
+# doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00011")
 # get_Actual_Value_And_Rendering()
 
 def add_Static_Valueto_Xml():
@@ -424,9 +424,9 @@ def  get_UUID(signedXml):
     print(cbc_UUID)
     return uuid
 
-@frappe.whitelist()
-def final_calls():
-        get_Actual_Value_And_Rendering()
+
+def final_calls(invoice_number):
+        get_Actual_Value_And_Rendering(invoice_number)
         gen ,sbXml  =  add_Static_Valueto_Xml()  # 
         sbXml = load_certificate(gen,sbXml)
         sbXml= create_File_SignedXML(sbXml)
@@ -439,4 +439,4 @@ def final_calls():
         uuid=get_UUID(signedXml)
         send_invoice_for_clearance_normal(uuid,invoiceHash)
         sys.exit()
-final_calls()
+final_calls("ACC-SINV-2023-00011")

@@ -2,7 +2,7 @@ frappe.ui.form.on("Sales Invoice", {
     refresh: function(frm) {
         frm.add_custom_button(__("click"), function() {
             frm.call({
-                method: "clickbutton",
+                method:  "saudi_phase2_api.saudi_phase2_api.myzatca_test.clickbutton",
                 args: {
 
                 },
@@ -16,3 +16,4 @@ frappe.ui.form.on("Sales Invoice", {
         }, __("sale invoice button"));
     }
 });
+

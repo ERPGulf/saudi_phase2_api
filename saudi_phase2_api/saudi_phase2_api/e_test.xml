@@ -21,14 +21,14 @@
    </ext:UBLExtensions>
 
    <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
-   <cbc:ID>100</cbc:ID>
+   <cbc:ID>{{doc.invoice_number}}</cbc:ID>
    <cbc:UUID>{{ doc.uuid }}</cbc:UUID>
    <cbc:IssueDate>{{doc.posting_date}}</cbc:IssueDate>
    <cbc:IssueTime>{{doc.posting_time}}</cbc:IssueTime>
-   <cbc:InvoiceTypeCode name="0100000">388</cbc:InvoiceTypeCode>
-   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
+   <cbc:InvoiceTypeCode name="0100000">{{doc.invoice_type_code}}</cbc:InvoiceTypeCode>
+   <cbc:DocumentCurrencyCode>{{doc.currency}}</cbc:DocumentCurrencyCode>
    <cbc:TaxCurrencyCode>{{doc.currency}}</cbc:TaxCurrencyCode>
-   <cbc:LineCountNumeric>2</cbc:LineCountNumeric>
+   <cbc:LineCountNumeric>{{doc.lineCount}}</cbc:LineCountNumeric>
    <cac:AdditionalDocumentReference>
       <cbc:ID>ICV</cbc:ID>
       <cbc:UUID>46531</cbc:UUID>
@@ -54,8 +54,7 @@
    <cac:AccountingSupplierParty>
       <cac:Party>
          <cac:PartyIdentification>
-            <cbc:ID schemeID="MLS">123457890</cbc:ID>
-
+            <cbc:ID schemeID="MLS">{{doc.accsupid}}</cbc:ID>
          </cac:PartyIdentification>
          <cac:PostalAddress>
             <cbc:StreetName>{{ doc.company_address_data.street }}</cbc:StreetName>
@@ -66,7 +65,7 @@
             <cbc:PostalZone>{{ doc.company_address_data.pincode }}</cbc:PostalZone>
             <cbc:CountrySubentity>{{  doc.company_address_data.state }}</cbc:CountrySubentity>
             <cac:Country>
-               <cbc:IdentificationCode>SA</cbc:IdentificationCode>
+               <cbc:IdentificationCode>{{doc.company_address_data.country}}</cbc:IdentificationCode>
             </cac:Country>
          </cac:PostalAddress>
          <cac:PartyTaxScheme>
@@ -84,7 +83,7 @@
    <cac:AccountingCustomerParty>
       <cac:Party>
          <cac:PartyIdentification>
-            <cbc:ID schemeID="SAG">456789123</cbc:ID>
+            <cbc:ID schemeID="SAG">{{doc.acccustid}}</cbc:ID>
          </cac:PartyIdentification>
          <cac:PostalAddress>
             <cbc:StreetName>{{doc.customer_address_data.street}}</cbc:StreetName>
@@ -95,7 +94,7 @@
             <cbc:PostalZone>{{ doc.customer_address_data.pincode}}</cbc:PostalZone>
             <cbc:CountrySubentity>{{ doc.customer_address_data.state }}</cbc:CountrySubentity>
             <cac:Country>
-               <cbc:IdentificationCode>SA</cbc:IdentificationCode>
+               <cbc:IdentificationCode>{{doc.customer_address_data.country}}</cbc:IdentificationCode>
             </cac:Country>
          </cac:PostalAddress>
          <cac:PartyTaxScheme>
@@ -112,7 +111,7 @@
       <cbc:ActualDeliveryDate>{{doc.posting_date}}</cbc:ActualDeliveryDate>
    </cac:Delivery>
    <cac:PaymentMeans>
-      <cbc:PaymentMeansCode>42</cbc:PaymentMeansCode>
+      <cbc:PaymentMeansCode>{{doc.payment_code}}</cbc:PaymentMeansCode>
    </cac:PaymentMeans>
    <cac:TaxTotal>
       <cbc:TaxAmount currencyID="SAR">{{doc.total_taxes_and_charges}}</cbc:TaxAmount>
