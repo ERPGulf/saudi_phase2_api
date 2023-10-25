@@ -109,6 +109,7 @@ def get_Actual_Value_And_Rendering(invoice_number):
                         "price_list_rate": item.price_list_rate,
                     }
                     e_invoice_items.append(item_data)
+                    #context for rendering
                     context = { "doc": {
                                     "document_id":doc.custom_document_id,
                                     "doc_uuid" : doc.custom_doc_uuid,
