@@ -119,6 +119,8 @@ def get_Actual_Value_And_Rendering(invoice_number):
         }
         e_invoice_items.append(item_data)
         context = { "doc": {
+                        "document_id":doc.custom_document_id,
+                        # "doc_uuid" : doc.custom_doc_uuid,
                         "acccustid":customer_doc.custom_accounting_customer_id,
                         "accsupid":company_doc.custom_accounting_supplier_party_id,
                         "invoice_number":doc.custom_invoice,
@@ -163,8 +165,6 @@ def get_Actual_Value_And_Rendering(invoice_number):
         with open("e_invoice.xml", "w") as file:
             file.write(invoice_xml)
             
-# doc = frappe.get_doc("Sales Invoice", "ACC-SINV-2023-00011")
-# get_Actual_Value_And_Rendering()
 
 def add_Static_Valueto_Xml():
     success = True

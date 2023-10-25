@@ -30,7 +30,7 @@
    <cbc:TaxCurrencyCode>{{doc.currency}}</cbc:TaxCurrencyCode>
    <cbc:LineCountNumeric>{{doc.lineCount}}</cbc:LineCountNumeric>
    <cac:AdditionalDocumentReference>
-      <cbc:ID>ICV</cbc:ID>
+      <cbc:ID>{{doc.document_id}}</cbc:ID>
       <cbc:UUID>46531</cbc:UUID>
    </cac:AdditionalDocumentReference>
    <cac:AdditionalDocumentReference>
