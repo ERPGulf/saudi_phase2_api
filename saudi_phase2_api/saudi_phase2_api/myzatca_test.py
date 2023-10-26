@@ -7,9 +7,11 @@ import subprocess
 import requests
 import json
 import base64
+from frappe.utils.file_manager import save_url
 from fatoora import Fatoora
 import sys
 import time
+from frappe.utils import now
 from frappe.utils.data import add_to_date, get_time, getdate
 import OpenSSL
 import chilkat2
@@ -156,7 +158,7 @@ def get_Actual_Value_And_Rendering(invoice_number):
                     print(invoice_xml)
                     with open("e_invoice.xml", "w") as file:
                         file.write(invoice_xml)
-
+                    
 def add_Static_Valueto_Xml():
                     success = True
                     sbXml = chilkat2.StringBuilder()
@@ -349,6 +351,7 @@ def  get_UUID(signedXml):
 
 @frappe.whitelist(allow_guest=True)
 def invoice_Zatca_call(invoice_number):
+                    try:
                         get_Actual_Value_And_Rendering(invoice_number)
                         gen ,sbXml  =  add_Static_Valueto_Xml()  
                         sbXml = load_certificate(gen,sbXml)
@@ -360,5 +363,12 @@ def invoice_Zatca_call(invoice_number):
                         signedXml=signedXml_Withtoken()
                         invoiceHash=get_InvoiceHash(signedXml)    
                         uuid=get_UUID(signedXml)
-                        return json.dumps(send_invoice_for_clearance_normal(uuid,invoiceHash))
+                        result = json.dumps(send_invoice_for_clearance_normal(uuid,invoiceHash)) 
+                        current_time =now()
+                        frappe.get_doc({"doctype":"Zatca Success log","title":"Zatca invoice call done successfully","message":"This message by Zatca Compliance ","invoice_number": invoice_number,"time":current_time,"zatca_response":result}).insert()    
+                        return result
+                    except:       
+                        frappe.log_error(title='Zatca invoice call failed', message=frappe.get_traceback())
 
+                    
+                            

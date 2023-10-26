@@ -221,14 +221,4 @@ doctype_js = {
     "Sales Invoice" : "public/js/our_sales_invoice.js"}
 
 
-fixtures=[
-    {"dt":"Sales Invoice","filter":[["module","=","Saudi Phase2 Api"]]}
-    ]
-
-fixtures=[
-    {"dt":"Customer","filter":[["module","=","Saudi Phase2 Api"]]}
-    ]
-
-fixtures=[
-    {"dt":"Company","filter":[["module","=","Saudi Phase2 Api"]]}
-    ]
+fixtures = [ {"dt": "Custom Field","filters": [["module", "=", "Saudi Phase2 Api"]] }]
