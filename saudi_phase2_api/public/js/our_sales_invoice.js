@@ -2,9 +2,9 @@ frappe.ui.form.on("Sales Invoice", {
     refresh: function(frm) {
         frm.add_custom_button(__("click"), function() {
             frm.call({
-                method:  "saudi_phase2_api.saudi_phase2_api.myzatca_test.invoice_Zatca_call",
+                method:  "saudi_phase2_api.saudi_phase2_api.myzatca_test.zatca_Background",
                 args: {
-                    invoice_number : "ACC-SINV-2023-00012",
+                    invoice_number : frm.doc.name,
                 },
                 callback: function(response) {
                     if (response.message) {  

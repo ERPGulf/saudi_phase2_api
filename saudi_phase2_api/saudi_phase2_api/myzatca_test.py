@@ -7,6 +7,7 @@ import subprocess
 import requests
 import json
 import base64
+from frappe import enqueue
 from frappe.utils.file_manager import save_url
 from fatoora import Fatoora
 import sys
@@ -40,10 +41,12 @@ def send_invoice_for_clearance_normal(uuid,invoiceHash):
                     }
                     try:
                         response = requests.request("POST", url, headers=headers, data=payload)
+                        return response.text , get_Clearance_Status(response)
                     except Exception as e:    
                         print(str(e)) 
+                        return "error","NOT_CLEARED"
                         sys.exit()
-                    return response.text
+                  
                     
 def get_signed_xml_invoice_for_clearance():
                 signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXml.xml"
@@ -159,6 +162,7 @@ def get_Actual_Value_And_Rendering(invoice_number):
                     with open("e_invoice.xml", "w") as file:
                         file.write(invoice_xml)
                     
+
 def add_Static_Valueto_Xml():
                     success = True
                     sbXml = chilkat2.StringBuilder()
@@ -167,7 +171,6 @@ def add_Static_Valueto_Xml():
                         print("Failed to load XML file to be signed.")
                         sys.exit()
                     gen = chilkat2.XmlDSigGen()
-
                     gen.SigLocation = "Invoice|ext:UBLExtensions|ext:UBLExtension|ext:ExtensionContent|sig:UBLDocumentSignatures|sac:SignatureInformation"
                     gen.SigLocationMod = 0
                     gen.SigId = "signature"
@@ -349,7 +352,15 @@ def  get_UUID(signedXml):
                         print(cbc_UUID)
                         return uuid
 
-@frappe.whitelist(allow_guest=True)
+def get_Clearance_Status(result):
+                        try:
+                            json_data = json.loads(result.text)
+                            clearance_status = json_data.get("clearanceStatus")
+                            print("clearance statur: " + clearance_status)
+                            return clearance_status
+                        except Exception as e:
+                            print(e)
+                       
 def invoice_Zatca_call(invoice_number):
                     try:
                         get_Actual_Value_And_Rendering(invoice_number)
@@ -363,12 +374,21 @@ def invoice_Zatca_call(invoice_number):
                         signedXml=signedXml_Withtoken()
                         invoiceHash=get_InvoiceHash(signedXml)    
                         uuid=get_UUID(signedXml)
-                        result = json.dumps(send_invoice_for_clearance_normal(uuid,invoiceHash)) 
+                        result,clearance_status=send_invoice_for_clearance_normal(uuid,invoiceHash)
                         current_time =now()
-                        frappe.get_doc({"doctype":"Zatca Success log","title":"Zatca invoice call done successfully","message":"This message by Zatca Compliance ","invoice_number": invoice_number,"time":current_time,"zatca_response":result}).insert()    
-                        return result
+                        if clearance_status == "CLEARED":
+                            frappe.get_doc({"doctype":"Zatca Success log","title":"Zatca invoice call done successfully","message":"This message by Zatca Compliance ","invoice_number": invoice_number,"time":current_time,"zatca_response":result}).insert()    
+                        else:
+                            frappe.log_error(title='Zatca invoice call failed in clearance status',message=frappe.get_traceback())
+                        return (json.dumps(result)) 
                     except:       
                         frappe.log_error(title='Zatca invoice call failed', message=frappe.get_traceback())
 
-                    
-                            
+@frappe.whitelist(allow_guest=True)                        
+def zatca_Background(invoice_number):
+                    frappe.enqueue(
+                            invoice_Zatca_call,
+                            queue="short",
+                            timeout=200,
+                            invoice_number=invoice_number)
+                    frappe.msgprint("queued")
