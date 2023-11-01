@@ -391,4 +391,3 @@ def zatca_Background(invoice_number):
                             queue="short",
                             timeout=200,
                             invoice_number=invoice_number)
-                    frappe.msgprint("queued")
