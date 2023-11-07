@@ -6,8 +6,9 @@ from subprocess import call
 import subprocess
 import requests
 import json
+import uuid
+import hashlib  
 import base64
-import hashlib
 from frappe import enqueue
 from frappe.utils.file_manager import save_url
 from fatoora import Fatoora
@@ -21,6 +22,7 @@ from lxml import etree
 import re
 
 def send_invoice_for_clearance_normal(uuid,invoiceHash):
+                    print("before zataca call")
                     signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXML_withQR.xml"
                     token,secret = create_security_token_from_csr()
                     with open(signedXmlFilePath, "r") as file:
@@ -29,23 +31,21 @@ def send_invoice_for_clearance_normal(uuid,invoiceHash):
                         base64_decoded = base64_encoded.decode("utf-8")
                     url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices"
                     payload = json.dumps({
-                    "invoiceHash": "OGVjNTBlZThjZWM5MGUwODI5NmUzYmIyZDNkZWFjOTNjODM1YWEyNjk2Zjg3MTc2N2FiNzUwMWU0ZDBiMGM1Mw==",
+                    "invoiceHash":invoiceHash,
                     "uuid": uuid,
                     "invoice": base64_decoded
                     })
-                    print("invoice hash is",invoiceHash)
                     headers = { 
                         'accept': 'application/json',
                         'Accept-Language': 'en',
                         'Accept-Version': 'V2',
                         'Authorization': "Basic VFVsSlJERnFRME5CTTNsblFYZEpRa0ZuU1ZSaWQwRkJaVFJUYUhOMmVXNDNNREo1VUhkQlFrRkJRamRvUkVGTFFtZG5jV2hyYWs5UVVWRkVRV3BDYWsxU1ZYZEZkMWxMUTFwSmJXbGFVSGxNUjFGQ1IxSlpSbUpIT1dwWlYzZDRSWHBCVWtKbmIwcHJhV0ZLYXk5SmMxcEJSVnBHWjA1dVlqTlplRVo2UVZaQ1oyOUthMmxoU21zdlNYTmFRVVZhUm1ka2JHVklVbTVaV0hBd1RWSjNkMGRuV1VSV1VWRkVSWGhPVlZVeGNFWlRWVFZYVkRCc1JGSlRNVlJrVjBwRVVWTXdlRTFDTkZoRVZFbDVUVVJaZUUxNlJURk5la1V3VG14dldFUlVTVEJOUkZsNFRXcEZNVTE2UlRCT2JHOTNVMVJGVEUxQmEwZEJNVlZGUW1oTlExVXdSWGhFYWtGTlFtZE9Wa0pCYjFSQ1YwWnVZVmQ0YkUxU1dYZEdRVmxFVmxGUlRFVjNNVzlaV0d4b1NVaHNhRm95YUhSaU0xWjVUVkpKZDBWQldVUldVVkZFUlhkcmVFMXFZM1ZOUXpSM1RHcEZkMVpxUVZGQ1oyTnhhR3RxVDFCUlNVSkNaMVZ5WjFGUlFVTm5Ua05CUVZSVVFVczViSEpVVm10dk9YSnJjVFphV1dOak9VaEVVbHBRTkdJNVV6UjZRVFJMYlRkWldFb3JjMjVVVm1oTWEzcFZNRWh6YlZOWU9WVnVPR3BFYUZKVVQwaEVTMkZtZERoREwzVjFWVms1TXpSMmRVMU9ielJKUTB0cVEwTkJhVmwzWjFselIwRXhWV1JGVVZOQ1ozcERRbWRMVWl0TlNIZDRTRlJCWWtKblRsWkNRVkZOUmtSRmRHRkhSalZaV0hkNVRGUkplazVJZDNwTVZFVjRUV3BOZWsxU09IZElVVmxMUTFwSmJXbGFVSGxNUjFGQ1FWRjNVRTE2VFhoTlZGbDVUMFJaTlU1RVFYZE5SRUY2VFZFd2QwTjNXVVJXVVZGTlJFRlJlRTFVUVhkTlVrVjNSSGRaUkZaUlVXRkVRV2hoV1ZoU2FsbFRRWGhOYWtWWlRVSlpSMEV4VlVWRWQzZFFVbTA1ZGxwRFFrTmtXRTU2WVZjMWJHTXpUWHBOUWpCSFFURlZaRVJuVVZkQ1FsTm5iVWxYUkRaaVVHWmlZa3RyYlZSM1QwcFNXSFpKWWtnNVNHcEJaa0puVGxaSVUwMUZSMFJCVjJkQ1VqSlpTWG8zUW5GRGMxb3hZekZ1WXl0aGNrdGpjbTFVVnpGTWVrSlBRbWRPVmtoU09FVlNla0pHVFVWUFoxRmhRUzlvYWpGdlpFaFNkMDlwT0haa1NFNHdXVE5LYzB4dWNHaGtSMDVvVEcxa2RtUnBOWHBaVXpsRVdsaEtNRkpYTlhsaU1uaHpUREZTVkZkclZrcFViRnBRVTFWT1JreFdUakZaYTA1Q1RGUkZkVmt6U25OTlNVZDBRbWRuY2tKblJVWkNVV05DUVZGVFFtOUVRMEp1VkVKMVFtZG5ja0puUlVaQ1VXTjNRVmxhYVdGSVVqQmpSRzkyVEROU2VtUkhUbmxpUXpVMldWaFNhbGxUTlc1aU0xbDFZekpGZGxFeVZubGtSVloxWTIwNWMySkRPVlZWTVhCR1lWYzFNbUl5YkdwYVZrNUVVVlJGZFZwWWFEQmFNa1kyWkVNMWJtSXpXWFZpUnpscVdWZDRabFpHVG1GU1ZXeFBWbXM1U2xFd1ZYUlZNMVpwVVRCRmRFMVRaM2hMVXpWcVkyNVJkMHQzV1VsTGQxbENRbEZWU0UxQlIwZElNbWd3WkVoQk5reDVPVEJqTTFKcVkyMTNkV1Z0UmpCWk1rVjFXakk1TWt4dVRtaE1NamxxWXpOQmQwUm5XVVJXVWpCUVFWRklMMEpCVVVSQloyVkJUVUl3UjBFeFZXUktVVkZYVFVKUlIwTkRjMGRCVVZWR1FuZE5RMEpuWjNKQ1owVkdRbEZqUkVGNlFXNUNaMnR5UW1kRlJVRlpTVE5HVVc5RlIycEJXVTFCYjBkRFEzTkhRVkZWUmtKM1RVTk5RVzlIUTBOelIwRlJWVVpDZDAxRVRVRnZSME5EY1VkVFRUUTVRa0ZOUTBFd1owRk5SVlZEU1ZGRVQxQXdaakJFY21oblpVUlVjbFpNZEVwMU9HeFhhelJJU25SbFkyWTFabVpsVWt4blpVUTRZMlZWWjBsblpFSkNUakl4U1RNM2FYTk5PVlZ0VTFGbE9IaFNjRWh1ZDA5NFNXYzNkMDR6V1RKMlZIQnpVR2hhU1QwPTpFcGo2OUdoOFRNTXpZZktsdEx2MW9tWktyaWUwc1A2TEF2YW1iUUZIVGd3PQ==",
-                        'Content-Type': 'application/json'}
+                        'Content-Type': 'application/json'
+                    }
                     settings = frappe.get_doc('Saudi Zatca settings')
                     settings.pih = invoiceHash
                     settings.save()
                     print("settings pih is",settings.pih)
-                    response = requests.request("POST", url, headers=headers, data=payload)
-                    print(response.text)
                     try:
                         response = requests.request("POST", url, headers=headers, data=payload)
                         return response.text , get_Clearance_Status(response)
@@ -53,7 +53,7 @@ def send_invoice_for_clearance_normal(uuid,invoiceHash):
                         print(str(e)) 
                         return "error","NOT_CLEARED"
                         sys.exit()
-                    
+                  
 def get_signed_xml_invoice_for_clearance():
                 signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXml.xml"
                 xmlSigned = chilkat2.Xml()
@@ -90,7 +90,6 @@ def create_security_token_from_csr():
                 response = requests.request("POST", url, headers=headers, data=payload)
                 data=json.loads(response.text)
                 return data["binarySecurityToken"],  data["secret"]
-
 def  get_Issue_Time(invoice_number):
                 doc = frappe.get_doc("Sales Invoice", invoice_number)
                 time = get_time(doc.posting_time)
@@ -105,6 +104,7 @@ def get_Tax_for_Item(full_string,item):
 
 def get_Actual_Value_And_Rendering(invoice_number):
                 e_invoice_items = []
+                settings = frappe.get_doc('Saudi Zatca settings')
                 doc = frappe.get_doc("Sales Invoice", invoice_number) 
                 company_doc = frappe.get_doc("Company", doc.company)
                 customer_doc= frappe.get_doc("Customer",doc.customer)
@@ -121,6 +121,7 @@ def get_Actual_Value_And_Rendering(invoice_number):
                         "price_list_rate": item.price_list_rate,
                     }
                     e_invoice_items.append(item_data)
+                    #context for rendering
                     context = { "doc": {
                                     "document_id":doc.custom_document_id,
                                     "doc_uuid" : doc.custom_doc_uuid,
@@ -140,7 +141,7 @@ def get_Actual_Value_And_Rendering(invoice_number):
                                     "currency":doc.currency,
                                     "customer": doc.customer,
                                     "total": doc.base_net_total,                                       
-                                    "pih": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+                                    "pih": doc.custom_pih,
                                     "total_taxes_and_charges": doc.base_total_taxes_and_charges,
                                     "total": doc.total,
                                     "grand_total": doc.grand_total,
@@ -164,55 +165,33 @@ def get_Actual_Value_And_Rendering(invoice_number):
                                                 "plot_id_no":customer_doc.custom_plot_id_no,
                                                 "country":customer_doc.custom_country},}}
                     invoice_xml = frappe.render_template("saudi_phase2_api/saudi_phase2_api/e_test.xml", context)
+                    # print(invoice_xml)
                     with open("e_invoice.xml", "w") as file:
-                        file.write(invoice_xml) 
-                    print("before file")
-                    records = frappe.get_all("File",filters = {
-                                    "attached_to_doctype": doc.doctype,
-                                    "attached_to_name": doc.name})
-                    if records:
-                        new = False
-                        print(f"Records exist for {doc.doctype}:{doc.name}")
-                        frappe.msgprint("new is false")
-                    else:
-                        new=True
-                        print(f"No records found for {doc.doctype} - {doc.name}.")
-                        frappe.msgprint("new is true ")
-
-                    frappe.msgprint("before saving XML ")
-                    fileX = frappe.get_doc(
-                        {   "doctype": "File",
-                            "file_name":  "e_invoice.xml",
+                        file.write(invoice_xml)
+                    xml_filename = "e_invoice.xml"  
+                    file = frappe.get_doc(
+                        {
+                            "doctype": "File",
+                            "file_name": xml_filename,
                             "attached_to_doctype": doc.doctype,
-                            "attached_to_name": doc.name, 
+                            "attached_to_name": doc.name,
                             "content": invoice_xml,
-                        })
-                    # if new==False:
-                    fileX.save()
-                    # else:
-                    #     fileX.insert()
-                    # print(fileX) 
-                  
-
-                    # frappe.msgprint("after saving XML ")
-
-                    # print("file name:  " + file.file_name)
-                    # print("file is  " + file.doctype)
-                    # print("file doctype: " + file.attached_to_doctype)
-                    # print("file docname"+ file.attached_to_name)
-                    # print("file content is "+file.content)
-
-                    # sys.exit()
-
-                    # attachments = frappe.get_all(
-                    #     "File",
-                    #     fields=("name", "file_name", "attached_to_name", "is_private"),
-                    #     filters={
-                    #         "file_name": xml_filename,
-                    #         "attached_to_doctype": "Sales Invoice",
-                    #         "attached_to_name": doc.name,
-                    #     }, )
+                        }
+                    )
+                    file.save()
+                    attachments = frappe.get_all(
+                        "File",
+                        fields=("name", "file_name", "attached_to_name", "is_private"),
+                        filters={
+                            "file_name": xml_filename,
+                            "attached_to_doctype": "Sales Invoice",
+                            "attached_to_name": doc.name,
+                        },
+                    )
                     # print(attachments)
+print("Invoice XML attached")
+
+
 def add_Static_Valueto_Xml():
                     success = True
                     sbXml = chilkat2.StringBuilder()
@@ -317,6 +296,7 @@ def qrcode_Creation():
                     tag = tag + 1
                     bdTlv.AppendByte(tag)
                     bdTlv.AppendCountedString(1,False,vatTotal,charset)
+                    length = len( bdTlv.GetEncoded("base64") )
                     sbDigestValue, xmlSigned, signedXmlFilePath = get_signed_xml_invoice_for_clearance()
                     tag = 6
                     bdTlv.AppendByte(tag)
@@ -354,6 +334,7 @@ def add_QRcode_To_Xml(bdTlv):
                         print("Did not find <cac:Signature> in the signed XML")
                         sys.exit()
                     success = sbSignedXml.WriteFile("signedXML_withQR.xml","utf-8",False)
+                    print("suceess add qr code")
                     return sbSignedXml
 
 def verify_SignXML_withQR(sbSignedXml):
@@ -371,6 +352,7 @@ def verify_SignXML_withQR(sbSignedXml):
                             if (verified != True):
                                     print(verifier.LastErrorText)
                                     sys.exit()
+
                             verifyIdx = verifyIdx + 1
                         print("All signatures were successfully verified.")
                    
@@ -385,12 +367,8 @@ def signedXml_Withtoken():
                             print(signedXml.LastErrorText)
                             sys.exit()
                         return signedXml
-
-
-def get_InvoiceHash(signedXml):
-                        invoiceHash = signedXml.GetChildContent("ext:UBLExtensions|ext:UBLExtension|ext:ExtensionContent|sig:UBLDocumentSignatures|sac:SignatureInformation|ds:Signature|ds:SignedInfo|ds:Reference[0]|ds:DigestValue")
-                        print("Invoice Hash is:", invoiceHash)
-                        return invoiceHash
+def get_InvoiceHash(doc):
+                        print("before call")
                         attachments = frappe.get_all(
                             "File",
                             fields=("name", "file_name", "attached_to_name","file_url"),
@@ -405,9 +383,7 @@ def get_InvoiceHash(signedXml):
                         file_name = cwd+'/'+site+"/public/files/"+xml_filename
                         with open(file_name,"rb") as f:
                             data = f.read()
-                            print("data is ", data)
                             sha256hash = hashlib.sha256(data).hexdigest()
-                            print(sha256hash)
                         return sha256hash
 
 def  get_UUID(signedXml):
@@ -435,41 +411,18 @@ def invoice_Zatca_call(invoice_number):
                         sbSignedXml= add_QRcode_To_Xml(bdTlv)
                         verify_SignXML_withQR(sbSignedXml)  
                         signedXml=signedXml_Withtoken()
-                        invoiceHash=get_InvoiceHash(signedXml)    
-                        # invoiceHash=get_InvoiceHash(doc)  
+                        invoiceHash=get_InvoiceHash(doc=frappe.get_doc('Sales Invoice','ACC-SINV-2023-00012'))    
                         uuid=get_UUID(signedXml)
                         result,clearance_status=send_invoice_for_clearance_normal(uuid,invoiceHash)
                         current_time =now()
                         if clearance_status == "CLEARED":
                             frappe.get_doc({"doctype":"Zatca Success log","title":"Zatca invoice call done successfully","message":"This message by Zatca Compliance ","invoice_number": invoice_number,"time":current_time,"zatca_response":result}).insert()    
-                            # frappe.get_doc({"doctype":"Saudi Zatca settings","pih":uuid}).insert()
+                            frappe.get_doc({"doctype":"Saudi Zatca settings","pih":uuid}).insert()  
                         else:
                             frappe.log_error(title='Zatca invoice call failed in clearance status',message=frappe.get_traceback())
                         return (json.dumps(result)) 
                     except:       
                         frappe.log_error(title='Zatca invoice call failed', message=frappe.get_traceback())
 
-@frappe.whitelist(allow_guest=True)                 
-def zatca_Background(invoice_number=None):
-                    if invoice_number==None:
-                            frappe.msgprint("No invoice number received")
-                            return
-                    frappe.enqueue(
-                            invoice_Zatca_call,
-                            queue="short",
-                            timeout=200,
-                            invoice_number=invoice_number)
+invoice_Zatca_call(invoice_number='ACC-SINV-2023-00012')
 
-                 # frappe.ZATCA_ERROR_EMAILS = {
-                                    #          "ADMINS": [
-                                    #["Person 1", "husna@htsqatar.com"]
-                                    #                    ],
-                                    #"SERVER_EMAIL": "19mcs55@meaec.edu.in"
-                                    #}
-# doc=frappe.get_doc('Sales Invoice','ACC-SINV-2023-00012')
-# invoice_Zatca_call(invoice_number='ACC-SINV-2023-00012')
-
-
-def frappe_Call(invoice_letter=None):
-        # frappe.msgprint("calling the invoice")
-        frappe.msgprint(invoice_letter)
