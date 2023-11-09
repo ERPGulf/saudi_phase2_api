@@ -18,7 +18,9 @@ from frappe.utils.data import add_to_date, get_time, getdate
 import OpenSSL
 import chilkat2
 from lxml import etree
+import uuid
 import re
+from frappe.utils.file_manager import get_content_hash
 
 def send_invoice_for_clearance_normal(uuid,invoiceHash):
                     signedXmlFilePath = "/opt/oxy/frappe-bench/sites/signedXML_withQR.xml"
@@ -29,11 +31,10 @@ def send_invoice_for_clearance_normal(uuid,invoiceHash):
                         base64_decoded = base64_encoded.decode("utf-8")
                     url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices"
                     payload = json.dumps({
-                    "invoiceHash": "OGVjNTBlZThjZWM5MGUwODI5NmUzYmIyZDNkZWFjOTNjODM1YWEyNjk2Zjg3MTc2N2FiNzUwMWU0ZDBiMGM1Mw==",
+                    "invoiceHash": invoiceHash,
                     "uuid": uuid,
                     "invoice": base64_decoded
                     })
-                    print("invoice hash is",invoiceHash)
                     headers = { 
                         'accept': 'application/json',
                         'Accept-Language': 'en',
@@ -43,7 +44,6 @@ def send_invoice_for_clearance_normal(uuid,invoiceHash):
                     settings = frappe.get_doc('Saudi Zatca settings')
                     settings.pih = invoiceHash
                     settings.save()
-                    print("settings pih is",settings.pih)
                     response = requests.request("POST", url, headers=headers, data=payload)
                     print(response.text)
                     try:
@@ -103,8 +103,19 @@ def get_Tax_for_Item(full_string,item):
                 tax_amount = data.get(item, [0, 0])[1]
                 return tax_amount,tax_percentage
 
+def invoice_uuid(invoice_number):
+                invoice= frappe.get_doc("Sales Invoice",invoice_number)
+                invoice.custom_uuid = str(uuid.uuid1())
+                invoice.save()
+                return invoice.custom_uuid   
+                   
+def get_ICV_code(invoice_number):
+                icv_code = + int(''.join(filter(str.isdigit, invoice_number))) 
+                return icv_code
+
 def get_Actual_Value_And_Rendering(invoice_number):
                 e_invoice_items = []
+                settings=frappe.get_doc('Saudi Zatca settings')
                 doc = frappe.get_doc("Sales Invoice", invoice_number) 
                 company_doc = frappe.get_doc("Company", doc.company)
                 customer_doc= frappe.get_doc("Customer",doc.customer)
@@ -118,107 +129,89 @@ def get_Actual_Value_And_Rendering(invoice_number):
                         "item_tax_amount":item_tax_amount,
                         "base_net_amount": item.amount + item_tax_amount,
                         "item_code": item.item_code,
-                        "price_list_rate": item.price_list_rate,
-                    }
+                        "price_list_rate": item.price_list_rate, }
                     e_invoice_items.append(item_data)
-                    context = { "doc": {
-                                    "document_id":doc.custom_document_id,
-                                    "doc_uuid" : doc.custom_doc_uuid,
-                                    "acccustid":customer_doc.custom_accounting_customer_id,
-                                    "accsupid":company_doc.custom_accounting_supplier_party_id,
-                                    "invoice_number":doc.custom_invoice,
-                                    "invoice_type_code":doc.custom_invoice_type_code,
-                                    "payment_code":doc.custom_payment_code,
-                                    "lineCount":doc.custom_total_no_of_line,
-                                    "e_invoice_items": e_invoice_items,
-                                    "company_tax_id":company_doc.tax_id,
-                                    "uuid":doc.custom_uuid,
-                                    "posting_date": doc.posting_date,
-                                    "qr_code": "GsiuvGjvchjbFhibcDhjv1886G",
-                                    "posting_time":get_Issue_Time(invoice_number),
-                                    "company": doc.company,
-                                    "currency":doc.currency,
-                                    "customer": doc.customer,
-                                    "total": doc.base_net_total,                                       
-                                    "pih": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
-                                    "total_taxes_and_charges": doc.base_total_taxes_and_charges,
-                                    "total": doc.total,
-                                    "grand_total": doc.grand_total,
-                                    "tax_rate":doc.taxes[0].rate,
-                                    "company_address_data":{
-                                                "sub":company_doc.custom_sub,
-                                                "building_no": company_doc.custom_build_no,
-                                                "street": company_doc.custom_street,
-                                                "city":company_doc.custom_city,
-                                                "pincode": company_doc.custom_pincode,
-                                                "state": company_doc.custom_state,
-                                                "plot_id_no": company_doc.custom_plot_id_no,
-                                                "country":company_doc.custom_country_name},
-                                    "customer_address_data": {
-                                                "street": customer_doc.custom_street,
-                                                "building_no": customer_doc.custom_building_no,
-                                                "sub":customer_doc.custom_sub,
-                                                "city":customer_doc.custom_city,
-                                                "pincode": customer_doc.custom_pincode,
-                                                "state": customer_doc.custom_state,
-                                                "plot_id_no":customer_doc.custom_plot_id_no,
-                                                "country":customer_doc.custom_country},}}
-                    invoice_xml = frappe.render_template("saudi_phase2_api/saudi_phase2_api/e_test.xml", context)
-                    with open("e_invoice.xml", "w") as file:
-                        file.write(invoice_xml) 
-                    print("before file")
-                    records = frappe.get_all("File",filters = {
-                                    "attached_to_doctype": doc.doctype,
-                                    "attached_to_name": doc.name})
-                    if records:
-                        new = False
-                        print(f"Records exist for {doc.doctype}:{doc.name}")
-                        frappe.msgprint("new is false")
-                    else:
-                        new=True
-                        print(f"No records found for {doc.doctype} - {doc.name}.")
-                        frappe.msgprint("new is true ")
-
-                    frappe.msgprint("before saving XML ")
-                    fileX = frappe.get_doc(
-                        {   "doctype": "File",
-                            "file_name":  "e_invoice.xml",
-                            "attached_to_doctype": doc.doctype,
-                            "attached_to_name": doc.name, 
-                            "content": invoice_xml,
-                        })
-                    # if new==False:
-                    fileX.save()
-                    # else:
-                    #     fileX.insert()
-                    # print(fileX) 
-                  
-
-                    # frappe.msgprint("after saving XML ")
-
-                    # print("file name:  " + file.file_name)
-                    # print("file is  " + file.doctype)
-                    # print("file doctype: " + file.attached_to_doctype)
-                    # print("file docname"+ file.attached_to_name)
-                    # print("file content is "+file.content)
-
-                    # sys.exit()
-
-                    # attachments = frappe.get_all(
-                    #     "File",
-                    #     fields=("name", "file_name", "attached_to_name", "is_private"),
-                    #     filters={
-                    #         "file_name": xml_filename,
-                    #         "attached_to_doctype": "Sales Invoice",
-                    #         "attached_to_name": doc.name,
-                    #     }, )
-                    # print(attachments)
-def add_Static_Valueto_Xml():
-                    success = True
+                context = { "doc": {
+                                "document_id":doc.custom_document_id,
+                                "icv_code" : get_ICV_code(invoice_number),
+                                "acccustid":customer_doc.custom_accounting_customer_id,
+                                "accsupid":company_doc.custom_accounting_supplier_party_id,
+                                "invoice_number":doc.custom_invoice,
+                                "invoice_type_code":doc.custom_invoice_type_code,
+                                "payment_code":doc.custom_payment_code,
+                                "lineCount":doc.custom_total_no_of_line,
+                                "e_invoice_items": e_invoice_items,
+                                "company_tax_id":company_doc.tax_id,
+                                "uuid":invoice_uuid(invoice_number),
+                                "posting_date": doc.posting_date,
+                                "qr_code": "GsiuvGjvchjbFhibcDhjv1886G",
+                                "posting_time":get_Issue_Time(invoice_number),
+                                "company": doc.company,
+                                "currency":doc.currency,
+                                "customer": doc.customer,
+                                "custom_taxcateg_id":doc.custom_taxcateg_id,
+                                "total": doc.base_net_total,                                       
+                                "pih": settings.pih,
+                                "total_taxes_and_charges": doc.base_total_taxes_and_charges,
+                                "total": doc.total,
+                                "grand_total": doc.grand_total,
+                                "tax_rate":doc.taxes[0].rate,
+                                "company_address_data":{
+                                            "sub":company_doc.custom_sub,
+                                            "building_no": company_doc.custom_build_no,
+                                            "street": company_doc.custom_street,
+                                            "city":company_doc.custom_city,
+                                            "pincode": company_doc.custom_pincode,
+                                            "state": company_doc.custom_state,
+                                            "plot_id_no": company_doc.custom_plot_id_no,
+                                            "country":company_doc.custom_country_name},
+                                "customer_address_data": {
+                                            "street": customer_doc.custom_street,
+                                            "building_no": customer_doc.custom_building_no,
+                                            "sub":customer_doc.custom_sub,
+                                            "city":customer_doc.custom_city,
+                                            "pincode": customer_doc.custom_pincode,
+                                            "state": customer_doc.custom_state,
+                                            "plot_id_no":customer_doc.custom_plot_id_no,
+                                            "country":customer_doc.custom_country},}}
+                invoice_xml = frappe.render_template("saudi_phase2_api/saudi_phase2_api/e_test.xml", context)
+                frappe.msgprint(frappe.session.user)
+                #find the existing XML file and delete it
+                try:
+                    if frappe.db.exists("File",{ "attached_to_name": doc.name, "attached_to_doctype": doc.doctype }):
+                        frappe.db.delete("File",{ "attached_to_name": doc.name, "attached_to_doctype": doc.doctype })
+                except Exception as e:
+                    frappe.msgprint(frappe.get_traceback())
+                fileX = frappe.get_doc(
+                    {   "doctype": "File",        
+                        "file_type": "xml",  
+                        "file_name":  "e_invoice_" + doc.name + ".xml",
+                        "attached_to_doctype": doc.doctype,
+                        "attached_to_name": doc.name, 
+                        "content": invoice_xml,
+                        "is_private": 1,
+                    })
+                try:
+                        frappe.msgprint("before insert() ")
+                        fileX.insert()
+                        frappe.msgprint("inserted) ")
+                        frappe.msgprint("Calculated hash SHA256 : " + hashlib.sha256(invoice_xml.encode('utf-8')).hexdigest())
+                        frappe.msgprint("Calculated hash MD5-128 : " + get_content_hash(invoice_xml))
+                except Exception as e:
+                        frappe.msgprint(frappe.get_traceback())
+                #For reference only -   code to get file-name of the XML saved.
+                try:
+                    frappe.msgprint(frappe.db.get_value('File', {'attached_to_name': doc.name, 'attached_to_doctype': doc.doctype}, ['file_name']))
+                except Exception as e:
+                    frappe.msgprint(frappe.get_traceback())
+                return invoice_xml
+                # sys.exit()
+                
+def add_Static_Valueto_Xml(invoice_xml):   
                     sbXml = chilkat2.StringBuilder()
-                    success = sbXml.LoadFile("/opt/oxy/frappe-bench/sites/e_invoice.xml","utf-8")
-                    if (success == False):
-                        print("Failed to load XML file to be signed.")
+                    sbXml.Append(invoice_xml)
+                    if sbXml.Length == 0:
+                        print("Failed to load XML content to be signed.")
                         sys.exit()
                     gen = chilkat2.XmlDSigGen()
                     gen.SigLocation = "Invoice|ext:UBLExtensions|ext:UBLExtension|ext:ExtensionContent|sig:UBLDocumentSignatures|sac:SignatureInformation"
@@ -386,29 +379,9 @@ def signedXml_Withtoken():
                             sys.exit()
                         return signedXml
 
-
 def get_InvoiceHash(signedXml):
                         invoiceHash = signedXml.GetChildContent("ext:UBLExtensions|ext:UBLExtension|ext:ExtensionContent|sig:UBLDocumentSignatures|sac:SignatureInformation|ds:Signature|ds:SignedInfo|ds:Reference[0]|ds:DigestValue")
-                        print("Invoice Hash is:", invoiceHash)
                         return invoiceHash
-                        attachments = frappe.get_all(
-                            "File",
-                            fields=("name", "file_name", "attached_to_name","file_url"),
-                            filters={"attached_to_name": ("in", doc.name), "attached_to_doctype": "Sales Invoice"},)
-                        site=(frappe.local.site)
-                        for attachment in attachments:
-                            if (attachment.file_name.startswith("e_in")
-                                and attachment.file_name.endswith(".xml")):
-                                xml_filename = attachment.file_name
-                                file_url = attachment.file_url
-                        cwd = os.getcwd() 
-                        file_name = cwd+'/'+site+"/public/files/"+xml_filename
-                        with open(file_name,"rb") as f:
-                            data = f.read()
-                            print("data is ", data)
-                            sha256hash = hashlib.sha256(data).hexdigest()
-                            print(sha256hash)
-                        return sha256hash
 
 def  get_UUID(signedXml):
                         cbc_UUID = signedXml.GetChildContent("cbc:UUID")
@@ -426,8 +399,8 @@ def get_Clearance_Status(result):
                        
 def invoice_Zatca_call(invoice_number):
                     try:
-                        get_Actual_Value_And_Rendering(invoice_number)
-                        gen ,sbXml  =  add_Static_Valueto_Xml()  
+                        invoice_xml=get_Actual_Value_And_Rendering(invoice_number)
+                        gen ,sbXml  =  add_Static_Valueto_Xml(invoice_xml)  
                         sbXml = load_certificate(gen,sbXml)
                         sbXml= create_File_SignedXML(sbXml)
                         zatca_Verification(sbXml) 
@@ -436,24 +409,25 @@ def invoice_Zatca_call(invoice_number):
                         verify_SignXML_withQR(sbSignedXml)  
                         signedXml=signedXml_Withtoken()
                         invoiceHash=get_InvoiceHash(signedXml)    
-                        # invoiceHash=get_InvoiceHash(doc)  
                         uuid=get_UUID(signedXml)
                         result,clearance_status=send_invoice_for_clearance_normal(uuid,invoiceHash)
                         current_time =now()
                         if clearance_status == "CLEARED":
                             frappe.get_doc({"doctype":"Zatca Success log","title":"Zatca invoice call done successfully","message":"This message by Zatca Compliance ","invoice_number": invoice_number,"time":current_time,"zatca_response":result}).insert()    
-                            # frappe.get_doc({"doctype":"Saudi Zatca settings","pih":uuid}).insert()
                         else:
                             frappe.log_error(title='Zatca invoice call failed in clearance status',message=frappe.get_traceback())
                         return (json.dumps(result)) 
                     except:       
                         frappe.log_error(title='Zatca invoice call failed', message=frappe.get_traceback())
 
-@frappe.whitelist(allow_guest=True)                 
+@frappe.whitelist()                 
 def zatca_Background(invoice_number=None):
+                    frappe.msgprint(frappe.session.user)
+                    # return "something"
                     if invoice_number==None:
                             frappe.msgprint("No invoice number received")
                             return
+                    # invoice_Zatca_call(invoice_number)
                     frappe.enqueue(
                             invoice_Zatca_call,
                             queue="short",
@@ -467,9 +441,3 @@ def zatca_Background(invoice_number=None):
                                     #"SERVER_EMAIL": "19mcs55@meaec.edu.in"
                                     #}
 # doc=frappe.get_doc('Sales Invoice','ACC-SINV-2023-00012')
-# invoice_Zatca_call(invoice_number='ACC-SINV-2023-00012')
-
-
-def frappe_Call(invoice_letter=None):
-        # frappe.msgprint("calling the invoice")
-        frappe.msgprint(invoice_letter)

@@ -4,7 +4,7 @@ frappe.ui.form.on("Sales Invoice", {
             frm.call({
                 method:  "saudi_phase2_api.saudi_phase2_api.myzatca_test.zatca_Background",
                 args: {
-                    invoice_number: frm.doc.name
+                    "invoice_number": frm.doc.name
                 },
                 callback: function(response) {
                     if (response.message) {  
