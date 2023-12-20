@@ -8,10 +8,10 @@ with open('requirements.txt') as f:
 from axis_inspection import __version__ as version
 
 setup(
-        name='zatca2023',
+        name='Saudi Phase2 Api',
         version=version,
-        description='zatca203',
-        author='Husna',
+        description='Saudi Phase2 Api',
+        author='HusnaM',
         author_email='support@erpgulf.com',
         packages=find_packages(),
         zip_safe=False,
