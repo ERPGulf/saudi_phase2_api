@@ -78,26 +78,50 @@ def generate_csr():
 
 @frappe.whitelist(allow_guest=True)
 def create_CSID(): 
-        try:
-            settings=frappe.get_doc('Zatca setting')     
-            with open("generated-csr-20231218053250.csr", "r") as f:
-                csr_contents = f.read()
-            # frappe.msgprint(csr_contents)
-            url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance"
-            payload = json.dumps({
-            "csr": csr_contents
-            })
-            headers = {
-            'accept': 'application/json',
-            'OTP': '123345',
-            'Accept-Version': 'V2',
-            'Content-Type': 'application/json',
-            'Cookie': 'TS0106293e=0132a679c07382ce7821148af16b99da546c13ce1dcddbef0e19802eb470e539a4d39d5ef63d5c8280b48c529f321e8b0173890e4f'
-            }
-            response = requests.request("POST", url, headers=headers, data=payload)
-            print(response.text)
-            frappe.msgprint(response.text)
-            frappe.msgprint("the CSID formed through url")
-        except Exception as e:
-                    frappe.msgprint("error")
+                try:
+                    settings=frappe.get_doc('Zatca setting')     
+                    with open("generated-csr-20231218053250.csr", "r") as f:
+                        csr_contents = f.read()
+                    # frappe.msgprint(csr_contents)
+                    url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance"
+                    payload = json.dumps({
+                    "csr": csr_contents
+                    })
+                    headers = {
+                    'accept': 'application/json',
+                    'OTP': '123345',
+                    'Accept-Version': 'V2',
+                    'Content-Type': 'application/json',
+                    'Cookie': 'TS0106293e=0132a679c07382ce7821148af16b99da546c13ce1dcddbef0e19802eb470e539a4d39d5ef63d5c8280b48c529f321e8b0173890e4f'
+                    }
+                    response = requests.request("POST", url, headers=headers, data=payload)
+                    print(response.text)
+                    frappe.msgprint(response.text)
+                    frappe.msgprint("the CSID formed through url")
+                except Exception as e:
+                            frappe.msgprint("error")
 
+def get_API_url(base_url):
+                    settings = frappe.get_doc('Zatca setting')
+                    if settings.select == "Sandbox":
+                        url = settings.sandbox_url + base_url
+                    elif settings.select == "Simulation":
+                        url = settings.simulation_url + base_url
+                    else:
+                        url = settings.production_url + base_url
+                    return url  
+
+@frappe.whitelist(allow_guest=True)                   
+def production_CSID():
+                    settings = frappe.get_doc('Zatca setting')
+                    payload = json.dumps({
+                    "compliance_request_id": settings.compliance_request_id })
+                    headers = {
+                    'accept': 'application/json',
+                    'Accept-Version': 'V2',
+                    'Authorization': 'Basic'+ settings.basic_auth,
+                    'Content-Type': 'application/json' }
+                    url= get_API_url(base_url="production/csids")
+                    response = requests.request("POST", url=url, headers=headers, data=payload)
+                    frappe.msgprint(response.text)
+                    print(response.text)

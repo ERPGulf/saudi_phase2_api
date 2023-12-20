@@ -5,9 +5,23 @@ frappe.ui.form.on("Zatca setting", {
 	refresh(frm) {
        
     },
+    production_csid: function (frm) {
+        frappe.call({
+            method: "saudi_phase2_api.saudi_phase2_api.zatcasdkcode.production_CSID",
+            args: {
+              
+            },
+            callback: function (r) {
+                if (!r.exc) {
+                    frm.save();
+                    window.open(r.message.url);
+                }
+            },
+        });
+    },
     csid_attach: function (frm) {
             frappe.call({
-                method: "saudi_phase2_api.saudi_phase2_api.csrcode.create_CSID",
+                method: "saudi_phase2_api.saudi_phase2_api.zatcasdkcode.create_CSID",
                 args: {
                   
                 },
@@ -21,7 +35,7 @@ frappe.ui.form.on("Zatca setting", {
         },
     create_csr: function (frm) {
         frappe.call({
-            method: "saudi_phase2_api.saudi_phase2_api.csrcode.generate_csr",
+            method: "saudi_phase2_api.saudi_phase2_api.zatcasdkcode.generate_csr",
             args: {
               
             },
