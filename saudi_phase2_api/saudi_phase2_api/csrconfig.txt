@@ -1,0 +1,29 @@
+oid_section= OIDS
+[ OIDS ]
+certificateTemplateName= 1.3.6.1.4.1.311.20.2
+[req]
+default_bits=2048
+emailAddress=dev.ahmed@axis-inspection.com
+req_extensions=v3_req
+x509_extensions=v3_Ca
+prompt=no
+default_md=sha256
+req_extensions=req_ext
+distinguished_name=dn
+[ dn ]
+C=SA
+OU=Axis Inspection
+O=Axis Inspection Contracting JSC
+CN=erpnext
+[v3_req]
+basicConstraints = CA:FALSE
+keyUsage =  digitalSignature, nonRepudiation , keyEncipherment
+[req_ext]
+certificateTemplateName = ASN1:PRINTABLESTRING:PREZATCA-code-Signing
+subjectAltName = dirName:alt_names
+[alt_names]
+SN=1-AxisInspection|2-13|3-7012364670
+UID=300970806100003
+title=1100
+registeredAddress=Al-Khobar
+businessCategory=Industrial services and contracting
