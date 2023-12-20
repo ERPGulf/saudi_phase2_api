@@ -1,5 +1,6 @@
 ## Saudi Phase2 Api
 
+This updated branch is according to new Zatca documentation and SDK ( 2023 ) 
 Saudi VAT Phase-2 implementation according to new Zatca API realease
 
 #### License
