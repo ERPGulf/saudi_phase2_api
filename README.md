@@ -1,3 +1,7 @@
+
+**For the latest app with 2024 Zatca guidelines , please use this link.  https://github.com/ERPGulf/Saudi-E-Invoicing-Phase-2-2024
+**
+
 ## Saudi Phase2 Api
 
 Saudi VAT Phase-2 implementation according to new Zatca API realease
